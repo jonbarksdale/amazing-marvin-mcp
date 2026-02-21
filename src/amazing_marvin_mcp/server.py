@@ -240,7 +240,8 @@ async def track_time(task_id: str, action: str) -> str:
     """Start or stop time tracking on a task. action must be 'START' or 'STOP'."""
     try:
         await _get_service().track_time(task_id, action)
-        return f"Time tracking {action.lower()}ed for task {task_id}."
+        verb = "started" if action == "START" else "stopped"
+        return f"Time tracking {verb} for task {task_id}."
     except (MarvinAPIError, ValueError) as e:
         return f"Error: {e}"
 
