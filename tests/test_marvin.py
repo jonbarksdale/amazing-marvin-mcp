@@ -166,3 +166,74 @@ class TestSearch:
         upper = await service.search(name.upper())
         lower = await service.search(name.lower())
         assert len(upper) == len(lower)
+
+
+class TestCreateAndDeleteTask:
+    @pytest.mark.asyncio
+    async def test_create_task_basic(self, service: MarvinService) -> None:
+        task = await service.create_task(title="MCP Test Task — delete me")
+        assert "_id" in task
+        await service.delete_task(task["_id"])
+
+    @pytest.mark.asyncio
+    async def test_create_task_with_parent_name(self, service: MarvinService) -> None:
+        categories = await service.get_categories()
+        if not categories:
+            pytest.skip("No categories in account")
+        parent_name = categories[0]["title"]
+        task = await service.create_task(title="MCP Test Parent", parent_name=parent_name)
+        assert "_id" in task
+        await service.delete_task(task["_id"])
+
+    @pytest.mark.asyncio
+    async def test_create_task_with_day_and_due(self, service: MarvinService) -> None:
+        task = await service.create_task(
+            title="MCP Test Sched", day="2026-12-31", due_date="2026-12-31"
+        )
+        assert "_id" in task
+        await service.delete_task(task["_id"])
+
+
+class TestMarkDone:
+    @pytest.mark.asyncio
+    async def test_mark_done(self, service: MarvinService) -> None:
+        task = await service.create_task(title="MCP Test Done")
+        result = await service.mark_done(task["_id"])
+        assert result is not None
+        await service.delete_task(task["_id"])
+
+
+class TestUpdateTask:
+    @pytest.mark.asyncio
+    async def test_update_title(self, service: MarvinService) -> None:
+        task = await service.create_task(title="MCP Test Update")
+        updated = await service.update_task(task["_id"], setters={"title": "MCP Test Updated"})
+        assert updated is not None
+        await service.delete_task(task["_id"])
+
+
+class TestTrackTime:
+    @pytest.mark.asyncio
+    async def test_start_stop(self, service: MarvinService) -> None:
+        task = await service.create_task(title="MCP Test Track")
+        start_result = await service.track_time(task["_id"], action="START")
+        assert start_result is not None
+        stop_result = await service.track_time(task["_id"], action="STOP")
+        assert stop_result is not None
+        await service.delete_task(task["_id"])
+
+    @pytest.mark.asyncio
+    async def test_invalid_action_raises(self) -> None:
+        service = MarvinService(api_token="fake")
+        with pytest.raises(ValueError, match="START.*STOP"):
+            await service.track_time("x", "PAUSE")
+
+
+class TestCreateEvent:
+    @pytest.mark.asyncio
+    async def test_create_event(self, service: MarvinService) -> None:
+        event = await service.create_event(
+            title="MCP Test Event", start="2026-12-31T09:00:00", duration_minutes=30
+        )
+        assert "_id" in event
+        await service.delete_task(event["_id"])

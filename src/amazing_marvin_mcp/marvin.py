@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from amazing_marvin_mcp.client import MarvinClient
@@ -117,3 +118,89 @@ class MarvinService:
                     }
                 )
         return matches
+
+    async def create_task(
+        self,
+        title: str,
+        day: str | None = None,
+        due_date: str | None = None,
+        parent_id: str | None = None,
+        parent_name: str | None = None,
+        label_ids: list[str] | None = None,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a task. Resolves parent_name to ID if provided."""
+        body: dict[str, Any] = {"title": title}
+        if day is not None:
+            body["day"] = day
+        if due_date is not None:
+            body["dueDate"] = due_date
+        if parent_name is not None:
+            parent_id = await self._resolve_parent_id(parent_name)
+        if parent_id is not None:
+            body["parentId"] = parent_id
+        if label_ids is not None:
+            body["labelIds"] = label_ids
+        if note is not None:
+            body["note"] = note
+
+        result: dict[str, Any] = await self._client.post("/addTask", data=body)
+        # Invalidate categories cache since a project may have been created
+        self._categories_cache = None
+        return result
+
+    async def create_event(
+        self,
+        title: str,
+        start: str,
+        duration_minutes: int,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a calendar event. Converts duration_minutes to milliseconds."""
+        body: dict[str, Any] = {
+            "title": title,
+            "start": start,
+            "length": duration_minutes * 60 * 1000,
+        }
+        if note is not None:
+            body["note"] = note
+        result: dict[str, Any] = await self._client.post("/addEvent", data=body)
+        return result
+
+    async def update_task(
+        self,
+        item_id: str,
+        setters: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Update task fields. Converts setters dict to API format."""
+        api_setters = [{"key": k, "val": v} for k, v in setters.items()]
+        body: dict[str, Any] = {"itemId": item_id, "setters": api_setters}
+        result: dict[str, Any] = await self._client.post("/doc/update", data=body)
+        return result
+
+    async def mark_done(self, item_id: str) -> dict[str, Any]:
+        """Mark a task as done. Auto-detects timezone offset."""
+        # time.timezone is seconds west of UTC; API expects minutes
+        offset_minutes = time.timezone // 60
+        body: dict[str, Any] = {
+            "itemId": item_id,
+            "timeZoneOffset": offset_minutes,
+        }
+        result: dict[str, Any] = await self._client.post("/markDone", data=body)
+        return result
+
+    async def delete_task(self, item_id: str) -> dict[str, Any]:
+        """Delete a task."""
+        body: dict[str, Any] = {"itemId": item_id}
+        result: dict[str, Any] = await self._client.post("/doc/delete", data=body)
+        # Invalidate categories cache since a project may have been deleted
+        self._categories_cache = None
+        return result
+
+    async def track_time(self, task_id: str, action: str) -> dict[str, Any]:
+        """Start or stop time tracking. action must be 'START' or 'STOP'."""
+        if action not in ("START", "STOP"):
+            raise ValueError(f"action must be START or STOP, got '{action}'")
+        body: dict[str, Any] = {"taskId": task_id, "action": action}
+        result: dict[str, Any] = await self._client.post("/track", data=body)
+        return result
