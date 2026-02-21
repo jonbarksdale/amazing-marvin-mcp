@@ -33,7 +33,13 @@ class MissingTokenError(Exception):
 
 
 def _get_service() -> MarvinService:
-    """Lazily initialize and return the MarvinService singleton."""
+    """Lazily initialize and return the MarvinService singleton.
+
+    The service holds an httpx.AsyncClient for connection pooling.
+    For STDIO transport the process exits when the pipe closes, so
+    explicit cleanup is not needed. Library consumers can call
+    service.close() directly.
+    """
     global _service  # noqa: PLW0603
     if _service is None:
         token = os.environ.get("MARVIN_API_TOKEN", "")

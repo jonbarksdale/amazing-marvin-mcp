@@ -40,7 +40,7 @@ class TestReadEndpoints:
 
 
 class TestWriteLifecycle:
-    """Single lifecycle test covering create, update, done, and delete."""
+    """Lifecycle tests covering create, update, done, and delete."""
 
     @pytest.mark.asyncio
     async def test_task_crud_lifecycle(
@@ -53,8 +53,29 @@ class TestWriteLifecycle:
 
             updated = await service.update_task(task_id, setters={"title": "MCP Updated"})
             assert updated is not None
+            # /doc/update returns a full task object
+            assert updated.get("title") == "MCP Updated"
 
             done_result = await service.mark_done(task_id)
             assert done_result is not None
         finally:
             await service.delete_task(task_id)
+
+    @pytest.mark.asyncio
+    async def test_create_task_with_labels(
+        self, service: MarvinService, sandbox_parent_id: str
+    ) -> None:
+        labels = await service.get_labels()
+        if not labels:
+            pytest.skip("No labels in account")
+        label_id = labels[0]["_id"]
+
+        task = await service.create_task(
+            title="MCP Label Test",
+            parent_id=sandbox_parent_id,
+            label_ids=[label_id],
+        )
+        try:
+            assert label_id in task.get("labelIds", [])
+        finally:
+            await service.delete_task(task["_id"])

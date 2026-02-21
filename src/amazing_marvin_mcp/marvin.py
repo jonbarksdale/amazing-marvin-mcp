@@ -22,6 +22,10 @@ class MarvinService:
         self._categories_cache: list[dict[str, Any]] | None = None
         self._labels_cache: list[dict[str, Any]] | None = None
 
+    async def close(self) -> None:
+        """Close the underlying HTTP client and release connections."""
+        await self._client.close()
+
     def invalidate_caches(self) -> None:
         """Clear all cached data. Called after mutations that may affect lookups."""
         self._categories_cache = None

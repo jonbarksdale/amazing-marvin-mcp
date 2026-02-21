@@ -43,6 +43,16 @@ def _server_params() -> StdioServerParameters:
     )
 
 
+def _server_params_no_token() -> StdioServerParameters:
+    """Build server parameters without an API token for error path testing."""
+    env = {k: v for k, v in os.environ.items() if k != "MARVIN_API_TOKEN"}
+    return StdioServerParameters(
+        command="uv",
+        args=["run", "amazing-marvin-mcp"],
+        env=env,
+    )
+
+
 async def _connect_and_run(callback) -> None:
     """Connect to the server and run the callback with the session.
 
@@ -86,3 +96,17 @@ class TestE2EServer:
             assert isinstance(result.content[0].text, str)
 
         await _connect_and_run(check)
+
+    @pytest.mark.asyncio
+    async def test_missing_token_returns_actionable_error(self) -> None:
+        """Calling a tool without MARVIN_API_TOKEN returns an LLM-actionable error."""
+        params = _server_params_no_token()
+        async with (
+            stdio_client(params) as (read_stream, write_stream),
+            ClientSession(read_stream, write_stream) as session,
+        ):
+            await session.initialize()
+            result = await session.call_tool("get_today", {})
+            text = result.content[0].text
+            assert "MARVIN_API_TOKEN" in text
+            assert "amazingmarvin.com" in text
