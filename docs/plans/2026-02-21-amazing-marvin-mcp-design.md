@@ -76,7 +76,7 @@ This layering means a future CLI or library imports `marvin.py` and `formatting.
 
 Single environment variable: `MARVIN_API_TOKEN` (full-access token).
 
-Sent as both `X-API-Token` and `X-Full-Access-Token` headers on every request. The full-access token is required for `/doc/update`, `/doc/create`, `/doc/delete`, and `/doc` endpoints. Using it for all requests simplifies configuration.
+Sent as `X-Full-Access-Token` header only. The API rejects requests that include `X-API-Token` with a full-access token value — sending both headers causes auth failure. The full-access token covers all endpoints including `/doc/update`, `/doc/create`, `/doc/delete`, and `/doc`.
 
 Token is read once at startup, never logged at any level.
 
