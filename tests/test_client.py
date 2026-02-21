@@ -26,11 +26,11 @@ class TestMarvinClientInit:
 
 
 class TestMarvinClientHeaders:
-    def test_headers_include_both_tokens(self) -> None:
+    def test_headers_include_full_access_token(self) -> None:
         client = MarvinClient(api_token="my-token")
         headers = client._build_headers()
-        assert headers["X-API-Token"] == "my-token"
         assert headers["X-Full-Access-Token"] == "my-token"
+        assert "X-API-Token" not in headers
 
     def test_headers_include_content_type(self) -> None:
         client = MarvinClient(api_token="my-token")

@@ -55,7 +55,6 @@ class MarvinClient:
     def _build_headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {
             "Content-Type": "application/json",
-            "X-API-Token": self._api_token,
             "X-Full-Access-Token": self._api_token,
         }
         if extra:
