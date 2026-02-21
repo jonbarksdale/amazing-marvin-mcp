@@ -1,0 +1,10 @@
+# ABOUTME: Cosmic Ray mutation testing configuration for formatting.py.
+# ABOUTME: Targets response formatting layer with fast unit tests only.
+
+[cosmic-ray]
+module-path = "src/amazing_marvin_mcp/formatting.py"
+timeout = 30.0
+test-command = "python -m pytest tests/test_unit_marvin.py tests/test_formatting.py -x -q --no-header --tb=line"
+
+[cosmic-ray.distributor]
+name = "local"

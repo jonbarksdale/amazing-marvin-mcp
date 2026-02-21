@@ -107,6 +107,20 @@ class TestResolveParentId:
         assert result == "a"
 
     @pytest.mark.asyncio
+    async def test_exact_match_preferred_when_substring_also_matches(self) -> None:
+        """Exact match on first loop should win over substring on second loop."""
+        svc, mock = _make_service()
+        # "Work" is both an exact match and a substring of "Homework"
+        mock.get.return_value = [
+            {"_id": "hw", "title": "Homework"},
+            {"_id": "w", "title": "Work"},
+        ]
+
+        # Should find "Work" via exact match (first loop), not "Homework" via substring
+        result = await svc._resolve_parent_id("Work")
+        assert result == "w"
+
+    @pytest.mark.asyncio
     async def test_no_match_raises(self) -> None:
         svc, mock = _make_service()
         mock.get.return_value = SAMPLE_CATEGORIES
@@ -253,6 +267,24 @@ class TestMarkDone:
         assert isinstance(call_data["timeZoneOffset"], int)
         assert call_data["itemId"] == "task1"
 
+    @pytest.mark.asyncio
+    async def test_timezone_offset_is_correct(self) -> None:
+        """Verify the offset calculation matches the system timezone."""
+        import datetime
+
+        svc, mock = _make_service()
+        mock.post.return_value = {"ok": True}
+
+        await svc.mark_done("task1")
+        call_data = mock.post.call_args[1]["data"]
+        offset = call_data["timeZoneOffset"]
+
+        # Compute expected offset independently
+        utc_offset = datetime.datetime.now(datetime.UTC).astimezone().utcoffset()
+        assert utc_offset is not None
+        expected = -int(utc_offset.total_seconds()) // 60
+        assert offset == expected
+
 
 class TestUpdateTask:
     @pytest.mark.asyncio
@@ -314,3 +346,23 @@ class TestCreateEvent:
         call_data = mock.post.call_args[1]["data"]
         assert call_data["length"] == 30 * 60 * 1000
         assert call_data["start"] == "2026-01-01T09:00:00"
+
+    @pytest.mark.asyncio
+    async def test_includes_note_when_provided(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "evt1", "title": "Meeting"}
+
+        await svc.create_event(
+            title="Meeting", start="2026-01-01T09:00:00", duration_minutes=30, note="Agenda items"
+        )
+        call_data = mock.post.call_args[1]["data"]
+        assert call_data["note"] == "Agenda items"
+
+    @pytest.mark.asyncio
+    async def test_omits_note_when_none(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "evt1", "title": "Meeting"}
+
+        await svc.create_event(title="Meeting", start="2026-01-01T09:00:00", duration_minutes=30)
+        call_data = mock.post.call_args[1]["data"]
+        assert "note" not in call_data
