@@ -11,3 +11,4 @@ session.sqlite
 session-formatting.sqlite
 mutants/
 .coverage
+.claude/
