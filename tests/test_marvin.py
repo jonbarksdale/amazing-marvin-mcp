@@ -137,3 +137,32 @@ class TestResolveParentId:
     async def test_no_match_raises(self, service: MarvinService) -> None:
         with pytest.raises(ValueError, match="No category"):
             await service._resolve_parent_id("zzz_nonexistent_category_zzz")
+
+
+class TestSearch:
+    @pytest.mark.asyncio
+    async def test_search_by_partial_name(self, service: MarvinService) -> None:
+        categories = await service.get_categories()
+        if not categories:
+            pytest.skip("No categories in account")
+        query = categories[0]["title"][:4]
+        results = await service.search(query)
+        assert isinstance(results, list)
+        assert len(results) > 0
+        assert "title" in results[0]
+        assert "children" in results[0]
+
+    @pytest.mark.asyncio
+    async def test_search_no_match(self, service: MarvinService) -> None:
+        results = await service.search("xyznonexistent999")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_search_case_insensitive(self, service: MarvinService) -> None:
+        categories = await service.get_categories()
+        if not categories:
+            pytest.skip("No categories in account")
+        name = categories[0]["title"]
+        upper = await service.search(name.upper())
+        lower = await service.search(name.lower())
+        assert len(upper) == len(lower)

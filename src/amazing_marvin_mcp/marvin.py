@@ -93,3 +93,27 @@ class MarvinService:
                 return cat["_id"]  # type: ignore[no-any-return]
 
         raise ValueError(f"No category matching '{name}' found.")
+
+    async def search(self, query: str) -> list[dict[str, Any]]:
+        """Search categories by name and return matches with their children.
+
+        Case-insensitive substring match against category titles.
+        For each match, fetches children and includes them in the result.
+        Returns list of dicts with category info plus a "children" key.
+        """
+        categories = await self.get_categories()
+        query_lower = query.lower()
+
+        matches: list[dict[str, Any]] = []
+        for cat in categories:
+            if query_lower in cat.get("title", "").lower():
+                children = await self.get_children(parent_id=cat["_id"])
+                matches.append(
+                    {
+                        "_id": cat["_id"],
+                        "title": cat["title"],
+                        "type": cat.get("type", ""),
+                        "children": children,
+                    }
+                )
+        return matches
