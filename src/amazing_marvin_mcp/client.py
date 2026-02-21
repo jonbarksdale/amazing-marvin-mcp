@@ -51,6 +51,7 @@ class MarvinClient:
         self.base_url = BASE_URL
         self._last_query_time: float = 0.0
         self._last_mutation_time: float = 0.0
+        self._http = httpx.AsyncClient(timeout=REQUEST_TIMEOUT_SECONDS)
 
     def _build_headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {
@@ -87,10 +88,9 @@ class MarvinClient:
         """Make a GET request to the Marvin API."""
         await self._wait_for_rate_limit(is_mutation=False)
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_SECONDS) as http:
-            response = await http.get(
-                url, headers=self._build_headers(extra_headers), params=params
-            )
+        response = await self._http.get(
+            url, headers=self._build_headers(extra_headers), params=params
+        )
         self._last_query_time = time.monotonic()
         if response.status_code != 200:
             raise MarvinAPIError.from_status(response.status_code, endpoint)
@@ -105,14 +105,17 @@ class MarvinClient:
         """Make a POST request to the Marvin API."""
         await self._wait_for_rate_limit(is_mutation=True)
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_SECONDS) as http:
-            response = await http.post(
-                url, headers=self._build_headers(extra_headers), json=data or {}
-            )
+        response = await self._http.post(
+            url, headers=self._build_headers(extra_headers), json=data or {}
+        )
         self._last_mutation_time = time.monotonic()
         if response.status_code != 200:
             raise MarvinAPIError.from_status(response.status_code, endpoint)
         return response.json()
+
+    async def close(self) -> None:
+        """Close the underlying HTTP client and release connections."""
+        await self._http.aclose()
 
     def __repr__(self) -> str:
         return f"MarvinClient(base_url={self.base_url!r})"

@@ -143,6 +143,7 @@ async def create_task(
     due_date: str | None = None,
     parent: str | None = None,
     note: str | None = None,
+    label_ids: list[str] | None = None,
 ) -> str:
     """Create a task. 'parent' can be a project name or ID. Dates use YYYY-MM-DD."""
     try:
@@ -154,6 +155,8 @@ async def create_task(
             kwargs["due_date"] = due_date
         if note is not None:
             kwargs["note"] = note
+        if label_ids is not None:
+            kwargs["label_ids"] = label_ids
         if parent is not None:
             if _looks_like_id(parent):
                 kwargs["parent_id"] = parent
@@ -204,7 +207,7 @@ async def update_task(
         if not setters:
             return "Error: No fields provided to update."
         result = await _get_service().update_task(item_id, setters)
-        return f"Updated task {item_id}: {result}"
+        return f"Updated: {format_task(result)}"
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 

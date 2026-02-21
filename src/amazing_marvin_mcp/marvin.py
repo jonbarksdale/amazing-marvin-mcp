@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-import time
+import datetime
 from typing import Any
 
 from amazing_marvin_mcp.client import MarvinClient
@@ -21,6 +21,11 @@ class MarvinService:
         self._client = MarvinClient(api_token=api_token)
         self._categories_cache: list[dict[str, Any]] | None = None
         self._labels_cache: list[dict[str, Any]] | None = None
+
+    def invalidate_caches(self) -> None:
+        """Clear all cached data. Called after mutations that may affect lookups."""
+        self._categories_cache = None
+        self._labels_cache = None
 
     async def get_today(self) -> list[dict[str, Any]]:
         """Return tasks and projects scheduled for today."""
@@ -99,12 +104,12 @@ class MarvinService:
 
         raise ValueError(f"No category matching '{name}' found.")
 
-    async def search(self, query: str) -> list[dict[str, Any]]:
+    async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
         """Search categories by name and return matches with their children.
 
         Case-insensitive substring match against category titles.
         For each match, fetches children and includes them in the result.
-        Returns list of dicts with category info plus a "children" key.
+        Limited to max_results to avoid excessive API calls from rate limiting.
         """
         categories = await self.get_categories()
         query_lower = query.lower()
@@ -121,6 +126,8 @@ class MarvinService:
                         "children": children,
                     }
                 )
+                if len(matches) >= max_results:
+                    break
         return matches
 
     async def create_task(
@@ -150,7 +157,7 @@ class MarvinService:
 
         result: dict[str, Any] = await self._client.post("/addTask", data=body)
         # Invalidate categories cache since a project may have been created
-        self._categories_cache = None
+        self.invalidate_caches()
         return result
 
     async def create_event(
@@ -183,9 +190,10 @@ class MarvinService:
         return result
 
     async def mark_done(self, item_id: str) -> dict[str, Any]:
-        """Mark a task as done. Auto-detects timezone offset."""
-        # time.timezone is seconds west of UTC; API expects minutes
-        offset_minutes = time.timezone // 60
+        """Mark a task as done. Auto-detects timezone offset (DST-aware)."""
+        utc_offset = datetime.datetime.now(datetime.UTC).astimezone().utcoffset()
+        # utcoffset() returns timedelta east of UTC; Marvin expects minutes west of UTC
+        offset_minutes = -int(utc_offset.total_seconds()) // 60 if utc_offset else 0
         body: dict[str, Any] = {
             "itemId": item_id,
             "timeZoneOffset": offset_minutes,
@@ -198,7 +206,7 @@ class MarvinService:
         body: dict[str, Any] = {"itemId": item_id}
         result: dict[str, Any] = await self._client.post("/doc/delete", data=body)
         # Invalidate categories cache since a project may have been deleted
-        self._categories_cache = None
+        self.invalidate_caches()
         return result
 
     async def track_time(self, task_id: str, action: str) -> dict[str, Any]:
