@@ -110,3 +110,34 @@ def format_time_blocks(blocks: list[dict[str, object]]) -> str:
         lines.append(f"- **{title}** {start}–{end}")
 
     return truncate_response("\n".join(lines))
+
+
+def format_labels(labels: list[dict[str, object]]) -> str:
+    """Format labels as a markdown list. Shows message when empty."""
+    if not labels:
+        return "No labels found."
+    lines = ["## Labels\n"]
+    for label in labels:
+        name = label.get("title", "Untitled")
+        label_id = label.get("_id", "?")
+        lines.append(f"- **{name}** (id: {label_id})")
+    return truncate_response("\n".join(lines))
+
+
+def format_search_results(
+    query: str, matches: list[dict[str, object]]
+) -> str:
+    """Format search results with matched categories and their children."""
+    if not matches:
+        return f"No results for '{query}'."
+    parts: list[str] = [f"## Search: {query}\n"]
+    for m in matches:
+        parts.append(f"### {m['title']} (id: {m['_id']})")
+        children = m.get("children", [])
+        if children and isinstance(children, list):
+            for child in children:
+                if isinstance(child, dict):
+                    parts.append(format_task(child))
+        else:
+            parts.append("  No child tasks.")
+    return truncate_response("\n".join(parts))

@@ -12,6 +12,8 @@ from mcp.server.fastmcp import FastMCP
 from amazing_marvin_mcp.client import MarvinAPIError
 from amazing_marvin_mcp.formatting import (
     format_categories_tree,
+    format_labels,
+    format_search_results,
     format_task,
     format_tasks_list,
     format_time_blocks,
@@ -26,11 +28,21 @@ _service: MarvinService | None = None
 _ID_PATTERN = re.compile(r"^[0-9a-fA-F-]{24,}$")
 
 
+class MissingTokenError(Exception):
+    """Raised when MARVIN_API_TOKEN is not set."""
+
+
 def _get_service() -> MarvinService:
     """Lazily initialize and return the MarvinService singleton."""
     global _service  # noqa: PLW0603
     if _service is None:
         token = os.environ.get("MARVIN_API_TOKEN", "")
+        if not token:
+            raise MissingTokenError(
+                "MARVIN_API_TOKEN environment variable is not set. "
+                "Please ask the user to set it with their Amazing Marvin "
+                "full-access token from https://app.amazingmarvin.com/pre?api"
+            )
         _service = MarvinService(api_token=token)
     return _service
 
@@ -51,7 +63,7 @@ async def get_today() -> str:
     try:
         items = await _get_service().get_today()
         return format_tasks_list(items, "Today")
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -61,7 +73,7 @@ async def get_due() -> str:
     try:
         items = await _get_service().get_due()
         return format_tasks_list(items, "Overdue")
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -71,7 +83,7 @@ async def get_categories() -> str:
     try:
         items = await _get_service().get_categories()
         return format_categories_tree(items)
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -85,7 +97,7 @@ async def get_children(parent: str) -> str:
         else:
             items = await svc.get_children(parent_name=parent)
         return format_tasks_list(items, f"Children of {parent}")
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -94,15 +106,8 @@ async def get_labels() -> str:
     """Get all labels."""
     try:
         items = await _get_service().get_labels()
-        if not items:
-            return "No labels found."
-        lines = ["## Labels\n"]
-        for label in items:
-            name = label.get("title", "Untitled")
-            label_id = label.get("_id", "?")
-            lines.append(f"- **{name}** (id: {label_id})")
-        return "\n".join(lines)
-    except (MarvinAPIError, ValueError) as e:
+        return format_labels(items)
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -112,7 +117,7 @@ async def get_time_blocks() -> str:
     try:
         items = await _get_service().get_time_blocks()
         return format_time_blocks(items)
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -121,19 +126,8 @@ async def search(query: str) -> str:
     """Search projects and folders by name. Returns matches with their tasks."""
     try:
         matches = await _get_service().search(query)
-        if not matches:
-            return f"No results for '{query}'."
-        parts: list[str] = [f"## Search: {query}\n"]
-        for m in matches:
-            parts.append(f"### {m['title']} (id: {m['_id']})")
-            children = m.get("children", [])
-            if children:
-                for child in children:
-                    parts.append(format_task(child))
-            else:
-                parts.append("  No child tasks.")
-        return "\n".join(parts)
-    except (MarvinAPIError, ValueError) as e:
+        return format_search_results(query, matches)
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -167,7 +161,7 @@ async def create_task(
                 kwargs["parent_name"] = parent
         result = await svc.create_task(**kwargs)
         return f"Created: {format_task(result)}"
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -184,7 +178,7 @@ async def create_event(
             title=title, start=start, duration_minutes=duration_minutes, note=note
         )
         return f"Created event: **{result.get('title', title)}** (id: {result.get('_id', '?')})"
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -211,7 +205,7 @@ async def update_task(
             return "Error: No fields provided to update."
         result = await _get_service().update_task(item_id, setters)
         return f"Updated task {item_id}: {result}"
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -221,7 +215,7 @@ async def mark_done(item_id: str) -> str:
     try:
         await _get_service().mark_done(item_id)
         return f"Marked task {item_id} as done."
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -231,7 +225,7 @@ async def delete_task(item_id: str) -> str:
     try:
         await _get_service().delete_task(item_id)
         return f"Deleted task {item_id}."
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 
@@ -242,7 +236,7 @@ async def track_time(task_id: str, action: str) -> str:
         await _get_service().track_time(task_id, action)
         verb = "started" if action == "START" else "stopped"
         return f"Time tracking {verb} for task {task_id}."
-    except (MarvinAPIError, ValueError) as e:
+    except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
 

@@ -55,7 +55,11 @@ class MarvinService:
         if not parent_id and not parent_name:
             raise ValueError("Provide either parent_id or parent_name.")
 
-        resolved_id = parent_id or await self._resolve_parent_id(parent_name)  # type: ignore[arg-type]
+        if parent_id:
+            resolved_id = parent_id
+        else:
+            assert parent_name is not None  # guaranteed by validation above
+            resolved_id = await self._resolve_parent_id(parent_name)
         result: list[dict[str, Any]] = await self._client.get(
             "/children", params={"parentId": resolved_id}
         )
@@ -86,12 +90,12 @@ class MarvinService:
         # Try exact match first
         for cat in categories:
             if cat.get("title", "").lower() == name_lower:
-                return cat["_id"]  # type: ignore[no-any-return]
+                return str(cat["_id"])
 
         # Fall back to substring match
         for cat in categories:
             if name_lower in cat.get("title", "").lower():
-                return cat["_id"]  # type: ignore[no-any-return]
+                return str(cat["_id"])
 
         raise ValueError(f"No category matching '{name}' found.")
 

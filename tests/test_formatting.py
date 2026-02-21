@@ -5,6 +5,8 @@ from amazing_marvin_mcp.formatting import (
     CHARACTER_LIMIT,
     NOTES_LIMIT,
     format_categories_tree,
+    format_labels,
+    format_search_results,
     format_task,
     format_tasks_list,
     format_time_blocks,
@@ -102,3 +104,46 @@ class TestFormatTimeBlocks:
         ]
         result = format_time_blocks(blocks)
         assert "Deep Work" in result
+
+
+class TestFormatLabels:
+    def test_empty_labels(self) -> None:
+        result = format_labels([])
+        assert "no labels" in result.lower()
+
+    def test_labels_with_data(self) -> None:
+        labels = [
+            {"_id": "l1", "title": "Urgent"},
+            {"_id": "l2", "title": "Low Priority"},
+        ]
+        result = format_labels(labels)
+        assert "Urgent" in result
+        assert "l1" in result
+        assert "Low Priority" in result
+
+
+class TestFormatSearchResults:
+    def test_no_results(self) -> None:
+        result = format_search_results("foo", [])
+        assert "No results" in result
+        assert "foo" in result
+
+    def test_results_with_children(self) -> None:
+        matches = [
+            {
+                "_id": "cat1",
+                "title": "Work",
+                "children": [
+                    {"_id": "t1", "title": "Task A"},
+                ],
+            },
+        ]
+        result = format_search_results("work", matches)
+        assert "Work" in result
+        assert "Task A" in result
+        assert "cat1" in result
+
+    def test_results_no_children(self) -> None:
+        matches = [{"_id": "cat1", "title": "Empty Project", "children": []}]
+        result = format_search_results("empty", matches)
+        assert "No child tasks" in result
