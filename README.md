@@ -80,21 +80,8 @@ Without a context manager, call `close()` explicitly to release connections.
 
 ```bash
 uv sync
-uv run ruff check .
-uv run mypy src/
-uv run pytest tests/ -v
+make check    # lint + unit tests
+make test     # all tests (requires MARVIN_API_TOKEN)
 ```
 
-Integration and E2E tests require `MARVIN_API_TOKEN` to be set.
-
-## Architecture
-
-```
-server.py  →  marvin.py  →  client.py  →  Amazing Marvin API
-(MCP)         (logic)       (HTTP)
-```
-
-- **`server.py`**: Thin MCP adapter — registers tools, delegates to business logic
-- **`marvin.py`**: Intent-oriented operations — name resolution, caching, timezone detection
-- **`client.py`**: Raw HTTP — auth headers, rate limiting, error mapping
-- **`formatting.py`**: Markdown conversion and response trimming
+See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture, testing strategy, and development workflow.
