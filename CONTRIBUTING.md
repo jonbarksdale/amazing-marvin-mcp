@@ -41,6 +41,10 @@ Integration and E2E tests require `MARVIN_API_TOKEN` to be set.
 
 GitHub Actions runs `make check`, `make coverage`, and `make mutate` on every push to main and on pull requests. Coverage and mutation reports are uploaded as build artifacts. See `.github/workflows/ci.yml`.
 
+**Thresholds** (CI fails if these regress):
+- Coverage: 75% minimum (unit tests only; integration/E2E cover the rest)
+- Mutation survival: marvin.py ≤60%, formatting.py ≤43% (includes equivalent type annotation mutants)
+
 ## Pre-Commit Checklist
 
 Before committing, verify:
@@ -49,7 +53,7 @@ Before committing, verify:
 - [ ] Public API changes are reflected in README.md (tools, prompts, library usage)
 - [ ] No compatibility shims for older Python versions (target is 3.11+)
 
-Pre-commit hooks run automatically if installed via `uv run pre-commit install`.
+Pre-commit hooks run ruff check and format automatically. Heavier checks (mypy, tests, mutation) run in CI.
 
 ## Pre-PR Checklist
 
