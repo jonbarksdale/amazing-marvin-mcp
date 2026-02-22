@@ -4,7 +4,8 @@
 
 Use Makefile targets for all development tasks. Never run ruff, mypy, pytest, or cosmic-ray directly.
 
-- `make check` — lint + unit tests (run before every commit)
+- `make check` — lint + format check + unit tests (run before every commit)
+- `make format` — auto-fix lint and formatting issues
 - `make test` — all tests including integration and E2E
 - `make mutate` — mutation testing (run after adding or changing tests)
 - `make mutate-report` — show cached mutation results

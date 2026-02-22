@@ -12,13 +12,21 @@ server.py  →  marvin.py  →  client.py  →  Amazing Marvin API
 - **`client.py`**: Raw HTTP — auth headers, rate limiting, error mapping
 - **`formatting.py`**: Markdown conversion and response trimming
 
+## Setup
+
+```bash
+uv sync
+uv run pre-commit install
+```
+
 ## Development Commands
 
 All development tasks have Makefile targets. Use these instead of running tools directly.
 
 | Command | Purpose |
 |---------|---------|
-| `make lint` | Run ruff and mypy |
+| `make lint` | Run ruff check, ruff format check, and mypy |
+| `make format` | Auto-fix lint and formatting issues |
 | `make test` | Run all tests |
 | `make test-unit` | Run unit tests only (no API calls) |
 | `make check` | Lint + unit tests |
@@ -28,6 +36,10 @@ All development tasks have Makefile targets. Use these instead of running tools 
 
 Integration and E2E tests require `MARVIN_API_TOKEN` to be set.
 
+## CI
+
+GitHub Actions runs `make check` on every push to main and on pull requests. See `.github/workflows/ci.yml`.
+
 ## Pre-Commit Checklist
 
 Before committing, verify:
@@ -35,6 +47,8 @@ Before committing, verify:
 - [ ] `make check` passes (lint + unit tests)
 - [ ] Public API changes are reflected in README.md (tools, prompts, library usage)
 - [ ] No compatibility shims for older Python versions (target is 3.11+)
+
+Pre-commit hooks run automatically if installed via `uv run pre-commit install`.
 
 ## Pre-PR Checklist
 
@@ -46,7 +60,7 @@ Before opening a pull request, also verify:
 ## Testing Strategy
 
 - **Unit tests** (`test_unit_marvin.py`, `test_formatting.py`, `test_client.py`, `test_server.py`): Business logic with mocked HTTP client. Fast, no API calls.
-- **Integration tests** (`test_marvin.py`): Validate real API contract. Require `MARVIN_API_TOKEN`.
+- **Integration tests** (`test_marvin_integration.py`): Validate real API contract. Require `MARVIN_API_TOKEN`.
 - **E2E tests** (`test_e2e.py`): Core MCP server flows over STDIO transport.
 - **Mutation testing**: cosmic-ray against unit tests. Results go to `build/`. Expect ~98% effective kill rate on marvin.py and ~85% on formatting.py (excluding equivalent type annotation mutants).
 
