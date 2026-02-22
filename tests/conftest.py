@@ -1,7 +1,6 @@
 # ABOUTME: Shared pytest fixtures for Amazing Marvin MCP tests.
 # ABOUTME: Provides configured MarvinService and test sandbox parent category.
 
-from __future__ import annotations
 
 import os
 from typing import Any

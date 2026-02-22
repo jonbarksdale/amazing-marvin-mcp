@@ -1,11 +1,9 @@
 # ABOUTME: HTTP client for the Amazing Marvin API.
 # ABOUTME: Handles authentication, rate limiting, and raw API calls.
 
-from __future__ import annotations
-
 import asyncio
 import time
-from typing import Any
+from typing import Any, Self
 
 import httpx
 
@@ -23,7 +21,7 @@ class MarvinAPIError(Exception):
         super().__init__(message)
 
     @classmethod
-    def from_status(cls, status_code: int, endpoint: str) -> MarvinAPIError:
+    def from_status(cls, status_code: int, endpoint: str) -> Self:
         messages = {
             401: "Invalid API token. Check MARVIN_API_TOKEN.",
             403: "Insufficient permissions. This endpoint requires a full-access token.",
@@ -117,7 +115,7 @@ class MarvinClient:
         """Close the underlying HTTP client and release connections."""
         await self._http.aclose()
 
-    async def __aenter__(self) -> MarvinClient:
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(

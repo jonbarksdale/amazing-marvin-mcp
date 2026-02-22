@@ -1,8 +1,6 @@
 # ABOUTME: Unit tests for MarvinService business logic with mocked HTTP client.
 # ABOUTME: Tests caching, name resolution, validation, and timezone without network calls.
 
-from __future__ import annotations
-
 from typing import Any
 from unittest.mock import AsyncMock
 

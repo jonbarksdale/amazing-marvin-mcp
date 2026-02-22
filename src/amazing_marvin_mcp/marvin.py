@@ -1,10 +1,8 @@
 # ABOUTME: Business logic layer for Amazing Marvin operations.
 # ABOUTME: Provides intent-oriented operations with name resolution, caching, and timezones.
 
-from __future__ import annotations
-
 import datetime
-from typing import Any
+from typing import Any, Self
 
 from amazing_marvin_mcp.client import MarvinClient
 
@@ -26,7 +24,7 @@ class MarvinService:
         """Close the underlying HTTP client and release connections."""
         await self._client.close()
 
-    async def __aenter__(self) -> MarvinService:
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(
