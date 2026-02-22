@@ -41,6 +41,7 @@ mutate: mutate-marvin mutate-formatting
 mutate-marvin: _build-dir
     rm -f {{ build_dir }}/session-marvin.sqlite
     uv run cosmic-ray init cosmic-ray.toml {{ build_dir }}/session-marvin.sqlite
+    # Filter out BitOr mutants from type union annotations (e.g. str | None)
     uv run python -m cosmic_ray.tools.filters.operators_filter {{ build_dir }}/session-marvin.sqlite cosmic-ray.toml
     uv run cosmic-ray exec cosmic-ray.toml {{ build_dir }}/session-marvin.sqlite
     uv run cr-report {{ build_dir }}/session-marvin.sqlite > {{ build_dir }}/mutants-marvin.txt 2>&1
@@ -51,6 +52,7 @@ mutate-marvin: _build-dir
 mutate-formatting: _build-dir
     rm -f {{ build_dir }}/session-formatting.sqlite
     uv run cosmic-ray init cosmic-ray-formatting.toml {{ build_dir }}/session-formatting.sqlite
+    # Filter out BitOr mutants from type union annotations (e.g. str | None)
     uv run python -m cosmic_ray.tools.filters.operators_filter {{ build_dir }}/session-formatting.sqlite cosmic-ray-formatting.toml
     uv run cosmic-ray exec cosmic-ray-formatting.toml {{ build_dir }}/session-formatting.sqlite
     uv run cr-report {{ build_dir }}/session-formatting.sqlite > {{ build_dir }}/mutants-formatting.txt 2>&1
