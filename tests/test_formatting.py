@@ -60,6 +60,28 @@ class TestFormatTask:
         result = format_task(task)
         assert "2026-02-25" in result
 
+    def test_done_task_shows_checked_box(self) -> None:
+        task = {"_id": "abc123", "title": "Buy milk", "done": True}
+        result = format_task(task)
+        assert "[x]" in result
+        assert "[ ]" not in result
+
+    def test_undone_task_shows_unchecked_box(self) -> None:
+        task = {"_id": "abc123", "title": "Buy milk", "done": False}
+        result = format_task(task)
+        assert "[ ]" in result
+        assert "[x]" not in result
+
+    def test_task_with_day_shows_scheduled(self) -> None:
+        task = {"_id": "abc123", "title": "Buy milk", "day": "2026-02-25"}
+        result = format_task(task)
+        assert "scheduled: 2026-02-25" in result
+
+    def test_task_with_short_notes(self) -> None:
+        task = {"_id": "abc123", "title": "Buy milk", "note": "Get 2%"}
+        result = format_task(task)
+        assert "Notes: Get 2%" in result
+
     def test_task_with_long_notes_trimmed(self) -> None:
         task = {"_id": "abc123", "title": "Buy milk", "note": "x" * 1000}
         result = format_task(task)
@@ -91,6 +113,34 @@ class TestFormatCategoriesTree:
         result = format_categories_tree(categories)
         assert "Work" in result
         assert "Personal" in result
+
+    def test_folder_type_shows_folder_icon(self) -> None:
+        categories = [{"_id": "1", "title": "Archive", "type": "folder"}]
+        result = format_categories_tree(categories)
+        assert "📁" in result
+        assert "📋" not in result
+
+    def test_project_type_shows_project_icon(self) -> None:
+        categories = [{"_id": "1", "title": "Work", "type": "project"}]
+        result = format_categories_tree(categories)
+        assert "📋" in result
+        assert "📁" not in result
+
+    def test_nested_categories(self) -> None:
+        categories = [
+            {"_id": "1", "title": "Work", "type": "project"},
+            {"_id": "2", "title": "Backend", "type": "project", "parentId": "1"},
+        ]
+        result = format_categories_tree(categories)
+        assert "Work" in result
+        assert "Backend" in result
+        # Child should be indented more than parent
+        lines = result.split("\n")
+        work_line = [line for line in lines if "Work" in line][0]
+        backend_line = [line for line in lines if "Backend" in line][0]
+        work_indent = len(work_line) - len(work_line.lstrip())
+        backend_indent = len(backend_line) - len(backend_line.lstrip())
+        assert backend_indent > work_indent
 
 
 class TestFormatTimeBlocks:
@@ -147,3 +197,15 @@ class TestFormatSearchResults:
         matches = [{"_id": "cat1", "title": "Empty Project", "children": []}]
         result = format_search_results("empty", matches)
         assert "No child tasks" in result
+
+    def test_children_not_a_list_shows_no_children(self) -> None:
+        matches = [{"_id": "cat1", "title": "Weird", "children": "not-a-list"}]
+        result = format_search_results("weird", matches)
+        assert "No child tasks" in result
+
+    def test_non_dict_children_skipped(self) -> None:
+        children = ["string", {"_id": "t1", "title": "Real"}]
+        matches = [{"_id": "cat1", "title": "Mixed", "children": children}]
+        result = format_search_results("mixed", matches)
+        assert "Real" in result
+        assert "string" not in result.split("Mixed")[1]  # "string" shouldn't appear as a task
