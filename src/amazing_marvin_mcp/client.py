@@ -117,6 +117,17 @@ class MarvinClient:
         """Close the underlying HTTP client and release connections."""
         await self._http.aclose()
 
+    async def __aenter__(self) -> MarvinClient:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        await self.close()
+
     def __repr__(self) -> str:
         return f"MarvinClient(base_url={self.base_url!r})"
 

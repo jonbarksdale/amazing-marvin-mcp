@@ -37,8 +37,11 @@ def _get_service() -> MarvinService:
 
     The service holds an httpx.AsyncClient for connection pooling.
     For STDIO transport the process exits when the pipe closes, so
-    explicit cleanup is not needed. Library consumers can call
-    service.close() directly.
+    explicit cleanup is not needed. Library consumers should use the
+    async context manager for automatic cleanup::
+
+        async with MarvinService(api_token=token) as svc:
+            items = await svc.get_today()
     """
     global _service  # noqa: PLW0603
     if _service is None:

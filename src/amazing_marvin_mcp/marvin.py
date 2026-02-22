@@ -26,6 +26,17 @@ class MarvinService:
         """Close the underlying HTTP client and release connections."""
         await self._client.close()
 
+    async def __aenter__(self) -> MarvinService:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        await self.close()
+
     def invalidate_caches(self) -> None:
         """Clear all cached data. Called after mutations that may affect lookups."""
         self._categories_cache = None

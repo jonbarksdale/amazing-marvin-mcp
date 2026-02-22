@@ -81,3 +81,31 @@ class TestErrorMapping:
     def test_500_error(self) -> None:
         error = MarvinAPIError.from_status(500, "test")
         assert "server error" in str(error).lower()
+
+
+class TestClientLifecycle:
+    """Test async context manager and explicit close."""
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_closes_client(self) -> None:
+        async with MarvinClient(api_token="test-token") as client:
+            assert client.base_url == "https://serv.amazingmarvin.com/api"
+        # After exiting, the underlying httpx client should be closed
+        assert client._http.is_closed
+
+    @pytest.mark.asyncio
+    async def test_explicit_close(self) -> None:
+        client = MarvinClient(api_token="test-token")
+        assert not client._http.is_closed
+        await client.close()
+        assert client._http.is_closed
+
+    @pytest.mark.asyncio
+    async def test_context_manager_closes_on_exception(self) -> None:
+        client: MarvinClient | None = None
+        with pytest.raises(RuntimeError, match="boom"):
+            async with MarvinClient(api_token="test-token") as c:
+                client = c
+                raise RuntimeError("boom")
+        assert client is not None
+        assert client._http.is_closed

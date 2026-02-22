@@ -31,6 +31,25 @@ SAMPLE_LABELS: list[dict[str, Any]] = [
 ]
 
 
+class TestServiceLifecycle:
+    @pytest.mark.asyncio
+    async def test_async_context_manager_delegates_close(self) -> None:
+        async with MarvinService(api_token="fake-token") as svc:
+            mock_client = AsyncMock()
+            svc._client = mock_client
+        mock_client.close.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_context_manager_closes_on_exception(self) -> None:
+        svc = MarvinService(api_token="fake-token")
+        mock_client = AsyncMock()
+        svc._client = mock_client
+        with pytest.raises(RuntimeError, match="boom"):
+            async with svc:
+                raise RuntimeError("boom")
+        mock_client.close.assert_awaited_once()
+
+
 class TestCategoryCaching:
     @pytest.mark.asyncio
     async def test_caches_after_first_call(self) -> None:
