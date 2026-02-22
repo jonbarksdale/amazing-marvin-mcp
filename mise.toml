@@ -1,0 +1,6 @@
+# ABOUTME: Tool version management for development dependencies.
+# ABOUTME: Python versions are managed by uv via pyproject.toml.
+
+[tools]
+just = "latest"
+"ubi:astral-sh/uv" = "latest"
