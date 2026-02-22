@@ -5,6 +5,7 @@ import os
 import re
 from typing import Any
 
+import httpx
 from mcp.server.fastmcp import FastMCP
 
 from amazing_marvin_mcp.client import MarvinAPIError
@@ -70,6 +71,10 @@ async def get_today() -> str:
     try:
         items = await _get_service().get_today()
         return format_tasks_list(items, "Today")
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -80,6 +85,10 @@ async def get_due() -> str:
     try:
         items = await _get_service().get_due()
         return format_tasks_list(items, "Overdue")
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -90,6 +99,10 @@ async def get_categories() -> str:
     try:
         items = await _get_service().get_categories()
         return format_categories_tree(items)
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -104,6 +117,10 @@ async def get_children(parent: str) -> str:
         else:
             items = await svc.get_children(parent_name=parent)
         return format_tasks_list(items, f"Children of {parent}")
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -114,6 +131,10 @@ async def get_labels() -> str:
     try:
         items = await _get_service().get_labels()
         return format_labels(items)
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -124,6 +145,10 @@ async def get_time_blocks() -> str:
     try:
         items = await _get_service().get_time_blocks()
         return format_time_blocks(items)
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -134,6 +159,10 @@ async def search(query: str) -> str:
     try:
         matches = await _get_service().search(query)
         return format_search_results(query, matches)
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -171,6 +200,10 @@ async def create_task(
                 kwargs["parent_name"] = parent
         result = await svc.create_task(**kwargs)
         return f"Created: {format_task(result)}"
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -188,6 +221,10 @@ async def create_event(
             title=title, start=start, duration_minutes=duration_minutes, note=note
         )
         return f"Created event: **{result.get('title', title)}** (id: {result.get('_id', '?')})"
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -215,6 +252,10 @@ async def update_task(
             return "Error: No fields provided to update."
         result = await _get_service().update_task(item_id, setters)
         return f"Updated: {format_task(result)}"
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -225,6 +266,10 @@ async def mark_done(item_id: str) -> str:
     try:
         await _get_service().mark_done(item_id)
         return f"Marked task {item_id} as done."
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -235,6 +280,10 @@ async def delete_task(item_id: str) -> str:
     try:
         await _get_service().delete_task(item_id)
         return f"Deleted task {item_id}."
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
@@ -246,6 +295,10 @@ async def track_time(task_id: str, action: str) -> str:
         await _get_service().track_time(task_id, action)
         verb = "started" if action == "START" else "stopped"
         return f"Time tracking {verb} for task {task_id}."
+    except httpx.TimeoutException:
+        return "Error: Request to Amazing Marvin timed out. Try again."
+    except httpx.HTTPError as e:
+        return f"Error: Could not connect to Amazing Marvin ({type(e).__name__})."
     except (MarvinAPIError, ValueError, MissingTokenError) as e:
         return f"Error: {e}"
 
