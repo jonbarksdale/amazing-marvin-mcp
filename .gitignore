@@ -7,8 +7,6 @@ build/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
-session.sqlite
-session-formatting.sqlite
 mutants/
 .coverage
 .claude/

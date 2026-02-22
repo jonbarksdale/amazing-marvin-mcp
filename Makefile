@@ -1,7 +1,9 @@
 # ABOUTME: Build targets for development tasks.
 # ABOUTME: Provides lint, test, and mutation testing commands.
 
-.PHONY: lint test mutate mutate-marvin mutate-formatting
+BUILD_DIR := build
+
+.PHONY: lint test test-unit mutate mutate-marvin mutate-formatting mutate-report check clean
 
 lint:
 	uv run ruff check .
@@ -13,16 +15,34 @@ test:
 test-unit:
 	uv run pytest tests/test_unit_marvin.py tests/test_formatting.py tests/test_client.py tests/test_server.py -v
 
+check: lint test-unit
+	@echo "All checks passed."
+
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
 mutate: mutate-marvin mutate-formatting
 
-mutate-marvin:
-	@rm -f session.sqlite
-	uv run cosmic-ray init cosmic-ray.toml session.sqlite
-	uv run cosmic-ray exec cosmic-ray.toml session.sqlite
-	@uv run cr-report session.sqlite 2>&1 | tail -1
+mutate-marvin: $(BUILD_DIR)
+	@rm -f $(BUILD_DIR)/session-marvin.sqlite
+	uv run cosmic-ray init cosmic-ray.toml $(BUILD_DIR)/session-marvin.sqlite
+	uv run cosmic-ray exec cosmic-ray.toml $(BUILD_DIR)/session-marvin.sqlite
+	uv run cr-report $(BUILD_DIR)/session-marvin.sqlite > $(BUILD_DIR)/mutants-marvin.txt 2>&1
+	@tail -1 $(BUILD_DIR)/mutants-marvin.txt
 
-mutate-formatting:
-	@rm -f session-formatting.sqlite
-	uv run cosmic-ray init cosmic-ray-formatting.toml session-formatting.sqlite
-	uv run cosmic-ray exec cosmic-ray-formatting.toml session-formatting.sqlite
-	@uv run cr-report session-formatting.sqlite 2>&1 | tail -1
+mutate-formatting: $(BUILD_DIR)
+	@rm -f $(BUILD_DIR)/session-formatting.sqlite
+	uv run cosmic-ray init cosmic-ray-formatting.toml $(BUILD_DIR)/session-formatting.sqlite
+	uv run cosmic-ray exec cosmic-ray-formatting.toml $(BUILD_DIR)/session-formatting.sqlite
+	uv run cr-report $(BUILD_DIR)/session-formatting.sqlite > $(BUILD_DIR)/mutants-formatting.txt 2>&1
+	@tail -1 $(BUILD_DIR)/mutants-formatting.txt
+
+mutate-report:
+	@echo "=== marvin.py ==="
+	@tail -3 $(BUILD_DIR)/mutants-marvin.txt
+	@echo ""
+	@echo "=== formatting.py ==="
+	@tail -3 $(BUILD_DIR)/mutants-formatting.txt
+
+clean:
+	rm -rf $(BUILD_DIR)

@@ -62,6 +62,20 @@ Add to your `claude_desktop_config.json`:
 | `plan_my_day` | Review today's tasks, overdue items, and time blocks |
 | `weekly_review` | Review overdue items and suggest cleanup |
 
+## Library Usage
+
+`MarvinService` and `MarvinClient` support async context managers for automatic connection cleanup:
+
+```python
+from amazing_marvin_mcp.marvin import MarvinService
+
+async with MarvinService(api_token="your-token") as svc:
+    tasks = await svc.get_today()
+    await svc.create_task(title="New task", parent_name="Work")
+```
+
+Without a context manager, call `close()` explicitly to release connections.
+
 ## Development
 
 ```bash
