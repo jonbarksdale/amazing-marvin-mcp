@@ -1,5 +1,5 @@
 # ABOUTME: CI workflow for pull requests and main branch pushes.
-# ABOUTME: Runs linting, type checking, formatting, and unit tests.
+# ABOUTME: Runs linting, type checking, formatting, unit tests, coverage, and mutation testing.
 
 name: CI
 
@@ -28,3 +28,23 @@ jobs:
 
       - name: Lint, format check, and unit tests
         run: make check
+
+      - name: Coverage report
+        run: make coverage
+
+      - name: Mutation testing
+        run: make mutate
+
+      - name: Mutation testing summary
+        if: always()
+        run: make mutate-report
+
+      - name: Upload coverage and mutation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            build/htmlcov/
+            build/mutants-marvin.txt
+            build/mutants-formatting.txt

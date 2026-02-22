@@ -3,7 +3,7 @@
 
 BUILD_DIR := build
 
-.PHONY: lint format test test-unit mutate mutate-marvin mutate-formatting mutate-report check clean
+.PHONY: lint format test test-unit coverage mutate mutate-marvin mutate-formatting mutate-report check clean
 
 lint:
 	uv run ruff check .
@@ -19,6 +19,10 @@ test:
 
 test-unit:
 	uv run pytest tests/test_unit_marvin.py tests/test_formatting.py tests/test_client.py tests/test_server.py -v
+
+coverage: $(BUILD_DIR)
+	uv run pytest tests/test_unit_marvin.py tests/test_formatting.py tests/test_client.py tests/test_server.py \
+		--cov=amazing_marvin_mcp --cov-report=term-missing --cov-report=html:$(BUILD_DIR)/htmlcov
 
 check: lint test-unit
 	@echo "All checks passed."

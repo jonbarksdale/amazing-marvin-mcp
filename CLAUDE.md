@@ -6,6 +6,7 @@ Use Makefile targets for all development tasks. Never run ruff, mypy, pytest, or
 
 - `make check` — lint + format check + unit tests (run before every commit)
 - `make format` — auto-fix lint and formatting issues
+- `make coverage` — unit tests with coverage report
 - `make test` — all tests including integration and E2E
 - `make mutate` — mutation testing (run after adding or changing tests)
 - `make mutate-report` — show cached mutation results
@@ -23,5 +24,7 @@ Target is Python 3.11+. Do not use `from __future__ import annotations` or other
 ## Project Conventions
 
 - See CONTRIBUTING.md for architecture, testing strategy, and key constraints.
+- See SECURITY.md for auth model, transport security, and token handling requirements.
 - The Amazing Marvin API uses `X-Full-Access-Token` only (not `X-API-Token`).
+- All tool handlers use the `@_handle_errors` decorator for consistent error handling.
 - Integration tests use "MCP Test" category as a sandbox parent.
