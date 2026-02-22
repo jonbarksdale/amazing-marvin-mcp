@@ -24,21 +24,24 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install just
+        uses: extractions/setup-just@v3
+
       - name: Install dependencies
         run: uv sync
 
       - name: Lint, format check, and unit tests
-        run: make check
+        run: just check
 
       - name: Coverage report (fails under 75%)
-        run: make coverage
+        run: just coverage
 
       - name: Mutation testing (fails if survival rate regresses)
-        run: make mutate
+        run: just mutate
 
       - name: Mutation testing summary
         if: always()
-        run: make mutate-report
+        run: just mutate-report
 
       - name: Upload coverage and mutation reports
         if: always()

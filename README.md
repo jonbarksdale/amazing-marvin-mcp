@@ -78,10 +78,12 @@ Without a context manager, call `close()` explicitly to release connections.
 
 ## Development
 
+Requires [just](https://github.com/casey/just#installation) and [uv](https://docs.astral.sh/uv/). With [mise](https://mise.jdx.dev/): `mise install`.
+
 ```bash
 uv sync
-make check    # lint + unit tests
-make test     # all tests (requires MARVIN_API_TOKEN)
+just check    # lint + unit tests
+just test     # all tests (requires MARVIN_API_TOKEN)
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture, testing strategy, and development workflow.

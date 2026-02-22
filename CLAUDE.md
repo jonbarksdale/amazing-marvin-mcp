@@ -2,19 +2,19 @@
 
 ## Commands
 
-Use Makefile targets for all development tasks. Never run ruff, mypy, pytest, or cosmic-ray directly.
+Use justfile recipes for all development tasks. Never run ruff, mypy, pytest, or cosmic-ray directly.
 
-- `make check` — lint + format check + unit tests (run before every commit)
-- `make format` — auto-fix lint and formatting issues
-- `make coverage` — unit tests with coverage report
-- `make test` — all tests including integration and E2E
-- `make mutate` — mutation testing (run after adding or changing tests)
-- `make mutate-report` — show cached mutation results
+- `just check` — lint + format check + unit tests (run before every commit)
+- `just format` — auto-fix lint and formatting issues
+- `just coverage` — unit tests with coverage report
+- `just test` — all tests including integration and E2E
+- `just mutate` — mutation testing (run after adding or changing tests)
+- `just mutate-report` — show cached mutation results
 
 ## Verification Workflow
 
-1. `make check` before every commit
-2. `make mutate` after adding or changing tests, and before marking a task complete
+1. `just check` before every commit
+2. `just mutate` after adding or changing tests, and before marking a task complete
 3. Check README.md when changing public API (tools, prompts, library interface)
 
 ## Python Version
