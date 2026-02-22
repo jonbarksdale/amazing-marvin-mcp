@@ -46,7 +46,7 @@ mutate-marvin: _build-dir
     uv run cosmic-ray exec cosmic-ray.toml {{ build_dir }}/session-marvin.sqlite
     uv run cr-report {{ build_dir }}/session-marvin.sqlite > {{ build_dir }}/mutants-marvin.txt 2>&1
     @tail -1 {{ build_dir }}/mutants-marvin.txt
-    uv run cr-rate --fail-over 5.0 {{ build_dir }}/session-marvin.sqlite
+    uv run cr-rate --fail-over 2.0 {{ build_dir }}/session-marvin.sqlite
 
 # Run mutation tests for formatting.py
 mutate-formatting: _build-dir
@@ -57,7 +57,7 @@ mutate-formatting: _build-dir
     uv run cosmic-ray exec cosmic-ray-formatting.toml {{ build_dir }}/session-formatting.sqlite
     uv run cr-report {{ build_dir }}/session-formatting.sqlite > {{ build_dir }}/mutants-formatting.txt 2>&1
     @tail -1 {{ build_dir }}/mutants-formatting.txt
-    uv run cr-rate --fail-over 22.0 {{ build_dir }}/session-formatting.sqlite
+    uv run cr-rate --fail-over 6.0 {{ build_dir }}/session-formatting.sqlite
 
 # Show cached mutation test results
 mutate-report:
