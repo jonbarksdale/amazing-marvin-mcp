@@ -4,6 +4,7 @@
 from amazing_marvin_mcp.formatting import (
     CHARACTER_LIMIT,
     NOTES_LIMIT,
+    TRUNCATION_MESSAGE,
     format_categories_tree,
     format_labels,
     format_search_results,
@@ -33,6 +34,33 @@ class TestTruncateResponse:
         # Should not end with partial b's line
         assert not result.rstrip().endswith("bbb")
 
+    def test_exact_character_limit_not_truncated(self) -> None:
+        """Text of exactly CHARACTER_LIMIT length should be returned as-is."""
+        text = "x" * CHARACTER_LIMIT
+        assert truncate_response(text) == text
+
+    def test_one_over_limit_is_truncated(self) -> None:
+        """Text one character over CHARACTER_LIMIT should be truncated."""
+        text = "x" * (CHARACTER_LIMIT + 1)
+        result = truncate_response(text)
+        assert result.endswith("[truncated — use filters to narrow results]")
+
+    def test_long_string_no_newlines(self) -> None:
+        """When no newline exists, truncation cuts at CHARACTER_LIMIT exactly."""
+        text = "x" * (CHARACTER_LIMIT + 500)
+        result = truncate_response(text)
+        # With no newline, cut should be at CHARACTER_LIMIT
+        expected = "x" * CHARACTER_LIMIT + TRUNCATION_MESSAGE
+        assert result == expected
+
+    def test_newline_only_at_position_zero(self) -> None:
+        """When the only newline is at position 0, rfind should find it."""
+        text = "\n" + "x" * (CHARACTER_LIMIT + 500)
+        result = truncate_response(text)
+        # rfind("\n", 0, CHARACTER_LIMIT) should find the newline at position 0
+        # text[:0] is empty, then TRUNCATION_MESSAGE is appended
+        assert result == TRUNCATION_MESSAGE
+
 
 class TestTrimNotes:
     def test_short_notes_unchanged(self) -> None:
@@ -46,6 +74,17 @@ class TestTrimNotes:
 
     def test_none_notes_returns_empty(self) -> None:
         assert trim_notes(None) == ""
+
+    def test_exact_notes_limit_not_trimmed(self) -> None:
+        """Notes of exactly NOTES_LIMIT length should be returned as-is."""
+        notes = "y" * NOTES_LIMIT
+        assert trim_notes(notes) == notes
+
+    def test_one_over_notes_limit_is_trimmed(self) -> None:
+        """Notes one character over NOTES_LIMIT should be trimmed."""
+        notes = "y" * (NOTES_LIMIT + 1)
+        result = trim_notes(notes)
+        assert result == "y" * NOTES_LIMIT + "[...]"
 
 
 class TestFormatTask:
@@ -86,6 +125,13 @@ class TestFormatTask:
         task = {"_id": "abc123", "title": "Buy milk", "note": "x" * 1000}
         result = format_task(task)
         assert "[...]" in result
+
+    def test_task_missing_done_key_shows_unchecked(self) -> None:
+        """When 'done' key is absent, task should default to unchecked."""
+        task = {"_id": "abc123", "title": "Buy milk"}
+        result = format_task(task)
+        assert "[ ]" in result
+        assert "[x]" not in result
 
 
 class TestFormatTasksList:
@@ -141,6 +187,50 @@ class TestFormatCategoriesTree:
         work_indent = len(work_line) - len(work_line.lstrip())
         backend_indent = len(backend_line) - len(backend_line.lstrip())
         assert backend_indent > work_indent
+
+    def test_orphan_parent_id_treated_as_root(self) -> None:
+        """Category with parentId pointing to nonexistent ID should be a root item."""
+        categories = [
+            {"_id": "1", "title": "Root", "type": "project"},
+            {"_id": "2", "title": "Orphan", "type": "project", "parentId": "nonexistent"},
+        ]
+        result = format_categories_tree(categories)
+        lines = [line for line in result.split("\n") if line.strip().startswith("-")]
+        root_line = next(line for line in lines if "Root" in line)
+        orphan_line = next(line for line in lines if "Orphan" in line)
+        # Both should be at root level (same indentation)
+        root_indent = len(root_line) - len(root_line.lstrip())
+        orphan_indent = len(orphan_line) - len(orphan_line.lstrip())
+        assert root_indent == orphan_indent
+
+    def test_four_level_nesting_indentation(self) -> None:
+        """4 levels of nesting should produce increasing indentation at each level."""
+        categories = [
+            {"_id": "1", "title": "Level0", "type": "folder"},
+            {"_id": "2", "title": "Level1", "type": "project", "parentId": "1"},
+            {"_id": "3", "title": "Level2", "type": "project", "parentId": "2"},
+            {"_id": "4", "title": "Level3", "type": "project", "parentId": "3"},
+        ]
+        result = format_categories_tree(categories)
+        lines = result.split("\n")
+
+        def indent_of(label: str) -> int:
+            line = next(ln for ln in lines if label in ln)
+            return len(line) - len(line.lstrip())
+
+        assert indent_of("Level0") == 0
+        assert indent_of("Level1") == 2
+        assert indent_of("Level2") == 4
+        assert indent_of("Level3") == 6
+
+    def test_root_items_have_no_leading_whitespace(self) -> None:
+        """Root-level categories should have no indentation."""
+        categories = [
+            {"_id": "1", "title": "RootItem", "type": "project"},
+        ]
+        result = format_categories_tree(categories)
+        root_line = next(line for line in result.split("\n") if "RootItem" in line)
+        assert root_line.startswith("- ")
 
 
 class TestFormatTimeBlocks:

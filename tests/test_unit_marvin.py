@@ -2,7 +2,7 @@
 # ABOUTME: Tests caching, name resolution, validation, and timezone without network calls.
 
 from typing import Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -283,6 +283,25 @@ class TestMarkDone:
         assert call_data["itemId"] == "task1"
 
     @pytest.mark.asyncio
+    async def test_null_utcoffset_uses_zero(self) -> None:
+        """When utcoffset() returns None, offset should default to 0."""
+        svc, mock = _make_service()
+        mock.post.return_value = {"ok": True}
+
+        # Create a mock datetime whose astimezone().utcoffset() returns None
+        mock_dt = MagicMock()
+        mock_dt.astimezone.return_value.utcoffset.return_value = None
+
+        with patch("amazing_marvin_mcp.marvin.datetime") as mock_datetime:
+            mock_datetime.UTC = __import__("datetime").UTC
+            mock_datetime.datetime.now.return_value = mock_dt
+
+            await svc.mark_done("task1")
+
+        call_data = mock.post.call_args[1]["data"]
+        assert call_data["timeZoneOffset"] == 0
+
+    @pytest.mark.asyncio
     async def test_timezone_offset_is_correct(self) -> None:
         """Verify the offset calculation matches the system timezone."""
         import datetime
@@ -349,6 +368,19 @@ class TestSearch:
 
         results = await svc.search("Match", max_results=3)
         assert len(results) == 3
+
+    @pytest.mark.asyncio
+    async def test_default_max_results_is_five(self) -> None:
+        """Without explicit max_results, search should return at most 5 matches."""
+        svc, mock = _make_service()
+        many_cats = [{"_id": f"c{i}", "title": f"Item {i}", "type": "project"} for i in range(10)]
+        mock.get.side_effect = [
+            many_cats,
+            *([[] for _ in range(5)]),  # children for 5 matches
+        ]
+
+        results = await svc.search("Item")
+        assert len(results) == 5
 
 
 class TestCreateEvent:
