@@ -12,3 +12,4 @@ mutants/
 .env
 .env.*
 .claude/
+.worktrees/
