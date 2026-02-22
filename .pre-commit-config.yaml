@@ -1,0 +1,19 @@
+# ABOUTME: Pre-commit hook configuration for automated code quality checks.
+# ABOUTME: Runs ruff linting, formatting, and the full make check target.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: make-check
+        name: make check
+        entry: make check
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

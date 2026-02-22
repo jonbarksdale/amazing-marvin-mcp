@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "MCP server for Amazing Marvin task management"
 requires-python = ">=3.11"
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2",
     "httpx>=0.27.0",
 ]
 
@@ -20,7 +20,31 @@ target-version = "py311"
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM", "TCH"]
+select = ["ALL"]
+ignore = [
+    "ANN",    # Annotations — redundant with mypy strict
+    "COM812", # Trailing comma — conflicts with ruff formatter
+    "D",      # Docstrings — project uses ABOUTME comments instead
+    "EM",     # Exception messages — too pedantic for this project size
+    "ERA",    # Commented-out code — preserved intentionally per project policy
+    "FBT",    # Boolean positional args — acceptable at this project size
+    "FIX",    # Fixme comments — allow TODO/FIXME markers
+    "ISC001", # Implicit string concat — conflicts with ruff formatter
+    "TD",     # TODO formatting — too opinionated
+    "PERF401", # list.append in loop — readability over micro-optimization
+    "PLR0913", # Too many function args — API-shaped functions need them
+    "TRY003",  # Long exception messages — acceptable inline
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",    # assert is expected in tests
+    "S106",    # Hardcoded passwords — test fixtures use fake tokens
+    "PLR2004", # Magic values are fine in test assertions
+    "PLC0415", # Import inside function — acceptable in tests for isolation
+    "PT012",   # Multi-statement pytest.raises blocks — sometimes needed
+    "SLF001",  # Private member access is needed for testing internals
+]
 
 [tool.mypy]
 python_version = "3.11"
@@ -31,6 +55,7 @@ warn_unused_configs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [dependency-groups]
 dev = [
@@ -40,4 +65,5 @@ dev = [
     "ruff>=0.8.0",
     "mypy>=1.13",
     "cosmic-ray>=8.4.4",
+    "pre-commit>=4.0",
 ]
