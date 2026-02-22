@@ -36,18 +36,20 @@ mutate: mutate-marvin mutate-formatting
 mutate-marvin: $(BUILD_DIR)
 	@rm -f $(BUILD_DIR)/session-marvin.sqlite
 	uv run cosmic-ray init cosmic-ray.toml $(BUILD_DIR)/session-marvin.sqlite
+	uv run python -m cosmic_ray.tools.filters.operators_filter $(BUILD_DIR)/session-marvin.sqlite cosmic-ray.toml
 	uv run cosmic-ray exec cosmic-ray.toml $(BUILD_DIR)/session-marvin.sqlite
 	uv run cr-report $(BUILD_DIR)/session-marvin.sqlite > $(BUILD_DIR)/mutants-marvin.txt 2>&1
 	@tail -1 $(BUILD_DIR)/mutants-marvin.txt
-	uv run cr-rate --fail-over 60.0 $(BUILD_DIR)/session-marvin.sqlite
+	uv run cr-rate --fail-over 5.0 $(BUILD_DIR)/session-marvin.sqlite
 
 mutate-formatting: $(BUILD_DIR)
 	@rm -f $(BUILD_DIR)/session-formatting.sqlite
 	uv run cosmic-ray init cosmic-ray-formatting.toml $(BUILD_DIR)/session-formatting.sqlite
+	uv run python -m cosmic_ray.tools.filters.operators_filter $(BUILD_DIR)/session-formatting.sqlite cosmic-ray-formatting.toml
 	uv run cosmic-ray exec cosmic-ray-formatting.toml $(BUILD_DIR)/session-formatting.sqlite
 	uv run cr-report $(BUILD_DIR)/session-formatting.sqlite > $(BUILD_DIR)/mutants-formatting.txt 2>&1
 	@tail -1 $(BUILD_DIR)/mutants-formatting.txt
-	uv run cr-rate --fail-over 43.0 $(BUILD_DIR)/session-formatting.sqlite
+	uv run cr-rate --fail-over 22.0 $(BUILD_DIR)/session-formatting.sqlite
 
 mutate-report:
 	@echo "=== marvin.py ==="

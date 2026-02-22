@@ -6,5 +6,10 @@ module-path = "src/amazing_marvin_mcp/marvin.py"
 timeout = 30.0
 test-command = "python -m pytest tests/test_unit_marvin.py tests/test_formatting.py -x -q --no-header --tb=line"
 
+[cosmic-ray.filters.operators-filter]
+exclude-operators = [
+    "core/ReplaceBinaryOperator_BitOr_.*",
+]
+
 [cosmic-ray.distributor]
 name = "local"
