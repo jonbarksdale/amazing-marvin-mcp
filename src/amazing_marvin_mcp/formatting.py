@@ -106,7 +106,7 @@ def format_time_blocks(blocks: list[dict[str, object]]) -> str:
         title = b.get("title", "Untitled")
         start = b.get("start", "?")
         end = b.get("end", "?")
-        lines.append(f"- **{title}** {start}–{end}")
+        lines.append(f"- **{title}** {start}\u2013{end}")
 
     return truncate_response("\n".join(lines))
 
@@ -123,9 +123,7 @@ def format_labels(labels: list[dict[str, object]]) -> str:
     return truncate_response("\n".join(lines))
 
 
-def format_search_results(
-    query: str, matches: list[dict[str, object]]
-) -> str:
+def format_search_results(query: str, matches: list[dict[str, object]]) -> str:
     """Format search results with matched categories and their children."""
     if not matches:
         return f"No results for '{query}'."

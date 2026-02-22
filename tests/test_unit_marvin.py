@@ -186,7 +186,7 @@ class TestTrackTimeValidation:
     @pytest.mark.asyncio
     async def test_invalid_action_raises(self) -> None:
         svc, _ = _make_service()
-        with pytest.raises(ValueError, match="START.*STOP"):
+        with pytest.raises(ValueError, match=r"START.*STOP"):
             await svc.track_time("x", "PAUSE")
 
     @pytest.mark.asyncio
@@ -195,9 +195,7 @@ class TestTrackTimeValidation:
         mock.post.return_value = {"ok": True}
 
         await svc.track_time("task1", "START")
-        mock.post.assert_called_once_with(
-            "/track", data={"taskId": "task1", "action": "START"}
-        )
+        mock.post.assert_called_once_with("/track", data={"taskId": "task1", "action": "START"})
 
 
 class TestCreateTask:

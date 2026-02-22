@@ -3,11 +3,16 @@
 
 BUILD_DIR := build
 
-.PHONY: lint test test-unit mutate mutate-marvin mutate-formatting mutate-report check clean
+.PHONY: lint format test test-unit mutate mutate-marvin mutate-formatting mutate-report check clean
 
 lint:
 	uv run ruff check .
+	uv run ruff format --check .
 	uv run mypy src/
+
+format:
+	uv run ruff check --fix .
+	uv run ruff format .
 
 test:
 	uv run pytest tests/ -v

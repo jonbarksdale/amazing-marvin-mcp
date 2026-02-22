@@ -136,8 +136,8 @@ class TestFormatCategoriesTree:
         assert "Backend" in result
         # Child should be indented more than parent
         lines = result.split("\n")
-        work_line = [line for line in lines if "Work" in line][0]
-        backend_line = [line for line in lines if "Backend" in line][0]
+        work_line = next(line for line in lines if "Work" in line)
+        backend_line = next(line for line in lines if "Backend" in line)
         work_indent = len(work_line) - len(work_line.lstrip())
         backend_indent = len(backend_line) - len(backend_line.lstrip())
         assert backend_indent > work_indent

@@ -2,6 +2,7 @@
 # ABOUTME: Handles authentication, rate limiting, and raw API calls.
 
 import asyncio
+import http
 import time
 from typing import Any, Self
 
@@ -28,7 +29,7 @@ class MarvinAPIError(Exception):
             404: f"Item not found at {endpoint}.",
             429: "Rate limited by Amazing Marvin. Try again shortly.",
         }
-        if status_code >= 500:
+        if status_code >= http.HTTPStatus.INTERNAL_SERVER_ERROR:
             msg = "Amazing Marvin server error. Try again later."
         else:
             msg = messages.get(status_code, f"API error {status_code} at {endpoint}.")
@@ -90,7 +91,7 @@ class MarvinClient:
             url, headers=self._build_headers(extra_headers), params=params
         )
         self._last_query_time = time.monotonic()
-        if response.status_code != 200:
+        if response.status_code != http.HTTPStatus.OK:
             raise MarvinAPIError.from_status(response.status_code, endpoint)
         return response.json()
 
@@ -107,7 +108,7 @@ class MarvinClient:
             url, headers=self._build_headers(extra_headers), json=data or {}
         )
         self._last_mutation_time = time.monotonic()
-        if response.status_code != 200:
+        if response.status_code != http.HTTPStatus.OK:
             raise MarvinAPIError.from_status(response.status_code, endpoint)
         return response.json()
 

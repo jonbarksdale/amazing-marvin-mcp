@@ -76,7 +76,7 @@ class MarvinService:
         if parent_id:
             resolved_id = parent_id
         else:
-            assert parent_name is not None  # guaranteed by validation above
+            assert parent_name is not None  # guaranteed by validation above  # noqa: S101
             resolved_id = await self._resolve_parent_id(parent_name)
         result: list[dict[str, Any]] = await self._client.get(
             "/children", params={"parentId": resolved_id}
