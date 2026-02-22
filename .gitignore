@@ -9,4 +9,6 @@ build/
 .ruff_cache/
 mutants/
 .coverage
+.env
+.env.*
 .claude/
