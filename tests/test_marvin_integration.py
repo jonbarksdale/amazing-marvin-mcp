@@ -34,6 +34,11 @@ class TestReadEndpoints:
         assert isinstance(result, list)
 
     @pytest.mark.asyncio
+    async def test_get_inbox(self, service: MarvinService) -> None:
+        result = await service.get_inbox()
+        assert isinstance(result, list)
+
+    @pytest.mark.asyncio
     async def test_get_time_blocks(self, service: MarvinService) -> None:
         result = await service.get_time_blocks()
         assert isinstance(result, list)

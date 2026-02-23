@@ -112,6 +112,14 @@ async def get_categories() -> str:
 
 @mcp.tool()
 @_handle_errors
+async def get_inbox() -> str:
+    """Get tasks in the inbox (not assigned to any project or folder)."""
+    items = await _get_service().get_inbox()
+    return format_tasks_list(items, "Inbox")
+
+
+@mcp.tool()
+@_handle_errors
 async def get_children(parent: str) -> str:
     """Get child tasks under a project or folder. Accepts name or ID."""
     svc = _get_service()
@@ -269,8 +277,10 @@ def weekly_review() -> str:
     return (
         "Help me do a weekly review. Please:\n"
         "1. Call get_due to find all overdue items\n"
-        "2. For each overdue item, suggest: reschedule, mark done, or delete\n"
-        "3. Summarize what needs attention"
+        "2. Call get_inbox to find tasks not assigned to any project\n"
+        "3. For each overdue item, suggest: reschedule, mark done, or delete\n"
+        "4. For each inbox item, suggest: assign to a project, schedule, or delete\n"
+        "5. Summarize what needs attention"
     )
 
 

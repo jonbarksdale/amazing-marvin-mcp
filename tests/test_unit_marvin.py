@@ -383,6 +383,26 @@ class TestSearch:
         assert len(results) == 5
 
 
+class TestGetInbox:
+    @pytest.mark.asyncio
+    async def test_calls_children_with_unassigned(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [{"_id": "t1", "title": "Inbox Task", "parentId": "unassigned"}]
+
+        result = await svc.get_inbox()
+        assert len(result) == 1
+        assert result[0]["title"] == "Inbox Task"
+        mock.get.assert_called_once_with("/children", params={"parentId": "unassigned"})
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_list(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = []
+
+        result = await svc.get_inbox()
+        assert result == []
+
+
 class TestCreateEvent:
     @pytest.mark.asyncio
     async def test_converts_duration_to_milliseconds(self) -> None:

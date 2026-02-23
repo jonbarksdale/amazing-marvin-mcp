@@ -15,6 +15,7 @@ EXPECTED_TOOLS = {
     "get_labels",
     "get_categories",
     "get_children",
+    "get_inbox",
     "search",
     "create_task",
     "create_event",
@@ -92,6 +93,17 @@ class TestE2EServer:
 
         async def check(session: ClientSession) -> None:
             result = await session.call_tool("get_today", {})
+            assert len(result.content) > 0
+            assert isinstance(result.content[0].text, str)
+
+        await _connect_and_run(check)
+
+    @pytest.mark.asyncio
+    async def test_call_get_inbox(self) -> None:
+        """Calling get_inbox should return text content."""
+
+        async def check(session: ClientSession) -> None:
+            result = await session.call_tool("get_inbox", {})
             assert len(result.content) > 0
             assert isinstance(result.content[0].text, str)
 

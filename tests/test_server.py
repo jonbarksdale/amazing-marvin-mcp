@@ -12,6 +12,7 @@ class TestServerSetup:
             "get_due",
             "get_categories",
             "get_children",
+            "get_inbox",
             "get_labels",
             "get_time_blocks",
             "search",
@@ -33,4 +34,4 @@ class TestServerSetup:
 
     def test_tool_count(self) -> None:
         tools = mcp._tool_manager.list_tools()
-        assert len(tools) == 13  # 7 read + 6 write
+        assert len(tools) == 14  # 8 read + 6 write

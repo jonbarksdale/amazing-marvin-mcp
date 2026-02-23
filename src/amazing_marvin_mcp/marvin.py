@@ -83,6 +83,13 @@ class MarvinService:
         )
         return result
 
+    async def get_inbox(self) -> list[dict[str, Any]]:
+        """Return tasks in the inbox (not assigned to any project or folder)."""
+        result: list[dict[str, Any]] = await self._client.get(
+            "/children", params={"parentId": "unassigned"}
+        )
+        return result
+
     async def get_labels(self) -> list[dict[str, Any]]:
         """Return all labels, using cache after first call."""
         if self._labels_cache is not None:
