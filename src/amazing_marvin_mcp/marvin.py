@@ -5,6 +5,7 @@ import datetime
 from typing import Any, Self
 
 from amazing_marvin_mcp.client import MarvinClient
+from amazing_marvin_mcp.formatting import filter_backburner
 
 
 class MarvinService:
@@ -45,10 +46,10 @@ class MarvinService:
         result: list[dict[str, Any]] = await self._client.get("/todayItems")
         return result
 
-    async def get_due(self) -> list[dict[str, Any]]:
+    async def get_due(self, backburner: str | None = None) -> list[dict[str, Any]]:
         """Return overdue items."""
         result: list[dict[str, Any]] = await self._client.get("/dueItems")
-        return result
+        return filter_backburner(result, backburner)
 
     async def get_categories(self) -> list[dict[str, Any]]:
         """Return all categories, using cache after first call."""
@@ -62,6 +63,7 @@ class MarvinService:
         self,
         parent_id: str | None = None,
         parent_name: str | None = None,
+        backburner: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return child tasks under a parent category.
 
@@ -81,14 +83,14 @@ class MarvinService:
         result: list[dict[str, Any]] = await self._client.get(
             "/children", params={"parentId": resolved_id}
         )
-        return result
+        return filter_backburner(result, backburner)
 
-    async def get_inbox(self) -> list[dict[str, Any]]:
+    async def get_inbox(self, backburner: str | None = None) -> list[dict[str, Any]]:
         """Return tasks in the inbox (not assigned to any project or folder)."""
         result: list[dict[str, Any]] = await self._client.get(
             "/children", params={"parentId": "unassigned"}
         )
-        return result
+        return filter_backburner(result, backburner)
 
     async def get_labels(self) -> list[dict[str, Any]]:
         """Return all labels, using cache after first call."""
@@ -124,7 +126,9 @@ class MarvinService:
 
         raise ValueError(f"No category matching '{name}' found.")
 
-    async def search(self, query: str, max_results: int = 5) -> list[dict[str, Any]]:
+    async def search(
+        self, query: str, max_results: int = 5, backburner: str | None = None
+    ) -> list[dict[str, Any]]:
         """Search categories by name and return matches with their children.
 
         Case-insensitive substring match against category titles.
@@ -134,20 +138,24 @@ class MarvinService:
         categories = await self.get_categories()
         query_lower = query.lower()
 
+        # Filter categories by title match, then by backburner status
+        title_matches = [c for c in categories if query_lower in c.get("title", "").lower()]
+        filtered_cats = filter_backburner(title_matches, backburner)
+
         matches: list[dict[str, Any]] = []
-        for cat in categories:
-            if query_lower in cat.get("title", "").lower():
-                children = await self.get_children(parent_id=cat["_id"])
-                matches.append(
-                    {
-                        "_id": cat["_id"],
-                        "title": cat["title"],
-                        "type": cat.get("type", ""),
-                        "children": children,
-                    }
-                )
-                if len(matches) >= max_results:
-                    break
+        for cat in filtered_cats:
+            cat_id = str(cat["_id"])
+            children = await self.get_children(parent_id=cat_id, backburner=backburner)
+            matches.append(
+                {
+                    "_id": cat_id,
+                    "title": cat["title"],
+                    "type": cat.get("type", ""),
+                    "children": children,
+                }
+            )
+            if len(matches) >= max_results:
+                break
         return matches
 
     async def create_task(

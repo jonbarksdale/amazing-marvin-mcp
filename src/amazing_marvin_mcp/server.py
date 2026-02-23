@@ -97,9 +97,13 @@ async def get_today() -> str:
 
 @mcp.tool()
 @_handle_errors
-async def get_due() -> str:
-    """Get overdue tasks and projects."""
-    items = await _get_service().get_due()
+async def get_due(backburner: str | None = None) -> str:
+    """Get overdue tasks and projects.
+
+    By default excludes backburner items.
+    Use backburner='include' to show all, or 'only' for backburner items only.
+    """
+    items = await _get_service().get_due(backburner=backburner)
     return format_tasks_list(items, "Overdue")
 
 
@@ -113,21 +117,29 @@ async def get_categories() -> str:
 
 @mcp.tool()
 @_handle_errors
-async def get_inbox() -> str:
-    """Get tasks in the inbox (not assigned to any project or folder)."""
-    items = await _get_service().get_inbox()
+async def get_inbox(backburner: str | None = None) -> str:
+    """Get tasks in the inbox (not assigned to any project or folder).
+
+    By default excludes backburner items.
+    Use backburner='include' to show all, or 'only' for backburner items only.
+    """
+    items = await _get_service().get_inbox(backburner=backburner)
     return format_tasks_list(items, "Inbox")
 
 
 @mcp.tool()
 @_handle_errors
-async def get_children(parent: str) -> str:
-    """Get child tasks under a project or folder. Accepts name or ID."""
+async def get_children(parent: str, backburner: str | None = None) -> str:
+    """Get child tasks under a project or folder. Accepts name or ID.
+
+    By default excludes backburner items.
+    Use backburner='include' to show all, or 'only' for backburner items only.
+    """
     svc = _get_service()
     if _looks_like_id(parent):
-        items = await svc.get_children(parent_id=parent)
+        items = await svc.get_children(parent_id=parent, backburner=backburner)
     else:
-        items = await svc.get_children(parent_name=parent)
+        items = await svc.get_children(parent_name=parent, backburner=backburner)
     return format_tasks_list(items, f"Children of {parent}")
 
 
@@ -149,9 +161,13 @@ async def get_time_blocks() -> str:
 
 @mcp.tool()
 @_handle_errors
-async def search(query: str) -> str:
-    """Search projects and folders by name. Returns matches with their tasks."""
-    matches = await _get_service().search(query)
+async def search(query: str, backburner: str | None = None) -> str:
+    """Search projects and folders by name. Returns matches with their tasks.
+
+    By default excludes backburner items.
+    Use backburner='include' to show all, or 'only' for backburner items only.
+    """
+    matches = await _get_service().search(query, backburner=backburner)
     return format_search_results(query, matches)
 
 
@@ -213,8 +229,13 @@ async def update_task(
     day: str | None = None,
     due_date: str | None = None,
     note: str | None = None,
+    backburner: bool | None = None,
 ) -> str:
-    """Update task fields. Pass only the fields you want to change."""
+    """Update task fields. Pass only the fields you want to change.
+
+    Set backburner=true to move a task to the backburner,
+    or backburner=false to restore it.
+    """
     setters: dict[str, Any] = {}
     if title is not None:
         setters["title"] = title
@@ -224,6 +245,8 @@ async def update_task(
         setters["dueDate"] = due_date
     if note is not None:
         setters["note"] = note
+    if backburner is not None:
+        setters["backburner"] = backburner
     if not setters:
         return "Error: No fields provided to update."
     result = await _get_service().update_task(item_id, setters)

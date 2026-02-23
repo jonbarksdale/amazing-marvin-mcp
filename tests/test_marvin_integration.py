@@ -44,6 +44,40 @@ class TestReadEndpoints:
         assert isinstance(result, list)
 
 
+class TestBackburnerFiltering:
+    """Verify backburner field is present in API responses and filtering works."""
+
+    @pytest.mark.asyncio
+    async def test_backburner_task_filtered_by_default(
+        self, service: MarvinService, sandbox_parent_id: str
+    ) -> None:
+        task = await create_test_task(service, sandbox_parent_id, "MCP Backburner Test")
+        task_id = task["_id"]
+        try:
+            # Move task to backburner
+            updated = await service.update_task(task_id, setters={"backburner": True})
+            assert updated.get("backburner") is True
+
+            # Default filter should exclude it
+            children = await service.get_children(parent_id=sandbox_parent_id)
+            ids = [t["_id"] for t in children]
+            assert task_id not in ids
+
+            # "include" should return it
+            all_children = await service.get_children(
+                parent_id=sandbox_parent_id, backburner="include"
+            )
+            all_ids = [t["_id"] for t in all_children]
+            assert task_id in all_ids
+
+            # "only" should return only backburner items
+            bb_children = await service.get_children(parent_id=sandbox_parent_id, backburner="only")
+            for t in bb_children:
+                assert t.get("backburner") is True
+        finally:
+            await service.delete_task(task_id)
+
+
 class TestWriteLifecycle:
     """Lifecycle tests covering create, update, done, and delete."""
 

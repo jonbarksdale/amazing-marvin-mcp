@@ -146,6 +146,32 @@ class TestResolveParentId:
             await svc._resolve_parent_id("nonexistent")
 
 
+class TestGetDueBackburner:
+    @pytest.mark.asyncio
+    async def test_excludes_backburner_by_default(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Overdue"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_due()
+        assert len(result) == 1
+        assert result[0]["title"] == "Overdue"
+
+    @pytest.mark.asyncio
+    async def test_backburner_only(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Overdue"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_due(backburner="only")
+        assert len(result) == 1
+        assert result[0]["title"] == "Deferred"
+
+
 class TestGetChildrenValidation:
     @pytest.mark.asyncio
     async def test_both_args_raises(self) -> None:
@@ -180,6 +206,30 @@ class TestGetChildrenValidation:
         result = await svc.get_children(parent_name="Work")
         assert len(result) == 1
         assert mock.get.call_args_list[1][1] == {"params": {"parentId": "cat1"}}
+
+    @pytest.mark.asyncio
+    async def test_excludes_backburner_by_default(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Active"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_children(parent_id="cat1")
+        assert len(result) == 1
+        assert result[0]["title"] == "Active"
+
+    @pytest.mark.asyncio
+    async def test_backburner_only(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Active"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_children(parent_id="cat1", backburner="only")
+        assert len(result) == 1
+        assert result[0]["title"] == "Deferred"
 
 
 class TestTrackTimeValidation:
@@ -334,6 +384,17 @@ class TestUpdateTask:
         assert {"key": "day", "val": "2026-01-01"} in setters
 
 
+class TestUpdateTaskBackburner:
+    @pytest.mark.asyncio
+    async def test_backburner_setter_passed_to_api(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "t1", "title": "Task", "backburner": True}
+
+        await svc.update_task("t1", setters={"backburner": True})
+        call_data = mock.post.call_args[1]["data"]
+        assert {"key": "backburner", "val": True} in call_data["setters"]
+
+
 class TestSearch:
     @pytest.mark.asyncio
     async def test_returns_matches_with_children(self) -> None:
@@ -370,6 +431,71 @@ class TestSearch:
         assert len(results) == 3
 
     @pytest.mark.asyncio
+    async def test_excludes_backburner_children_by_default(self) -> None:
+        svc, mock = _make_service()
+        children = [
+            {"_id": "t1", "title": "Active"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+        mock.get.side_effect = [SAMPLE_CATEGORIES, children]
+
+        results = await svc.search("Work")
+        assert len(results) == 1
+        assert len(results[0]["children"]) == 1
+        assert results[0]["children"][0]["title"] == "Active"
+
+    @pytest.mark.asyncio
+    async def test_excludes_backburner_categories_by_default(self) -> None:
+        svc, mock = _make_service()
+        categories = [
+            {"_id": "cat1", "title": "Work", "type": "project"},
+            {"_id": "cat2", "title": "Work Archive", "type": "project", "backburner": True},
+        ]
+        # categories call + children for cat1 only (cat2 is filtered before fetch)
+        mock.get.side_effect = [categories, [{"_id": "t1", "title": "Task"}]]
+
+        results = await svc.search("Work")
+        # Only cat1 ("Work") should appear; cat2 ("Work Archive") is backburner
+        assert len(results) == 1
+        assert results[0]["title"] == "Work"
+
+    @pytest.mark.asyncio
+    async def test_backburner_only_returns_backburner_categories(self) -> None:
+        svc, mock = _make_service()
+        categories = [
+            {"_id": "cat1", "title": "Work", "type": "project"},
+            {"_id": "cat2", "title": "Work Archive", "type": "project", "backburner": True},
+        ]
+        # categories call + children for cat2 only (cat1 should be skipped)
+        mock.get.side_effect = [categories, []]
+
+        results = await svc.search("Work", backburner="only")
+        assert len(results) == 1
+        assert results[0]["title"] == "Work Archive"
+
+    @pytest.mark.asyncio
+    async def test_search_backburner_only_filters_categories_and_children(self) -> None:
+        """With backburner='only', both categories and children are filtered to backburner items."""
+        svc, mock = _make_service()
+        categories = [
+            {"_id": "cat1", "title": "Work", "type": "project"},
+            {"_id": "cat2", "title": "Work Someday", "type": "project", "backburner": True},
+        ]
+        children = [
+            {"_id": "t1", "title": "Active child"},
+            {"_id": "t2", "title": "Backburner child", "backburner": True},
+        ]
+        mock.get.side_effect = [categories, children]
+
+        results = await svc.search("Work", backburner="only")
+        # Only cat2 (backburner category) should appear
+        assert len(results) == 1
+        assert results[0]["title"] == "Work Someday"
+        # Only backburner children should be included
+        assert len(results[0]["children"]) == 1
+        assert results[0]["children"][0]["title"] == "Backburner child"
+
+    @pytest.mark.asyncio
     async def test_default_max_results_is_five(self) -> None:
         """Without explicit max_results, search should return at most 5 matches."""
         svc, mock = _make_service()
@@ -401,6 +527,41 @@ class TestGetInbox:
 
         result = await svc.get_inbox()
         assert result == []
+
+    @pytest.mark.asyncio
+    async def test_excludes_backburner_by_default(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Active"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_inbox()
+        assert len(result) == 1
+        assert result[0]["title"] == "Active"
+
+    @pytest.mark.asyncio
+    async def test_backburner_only(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Active"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_inbox(backburner="only")
+        assert len(result) == 1
+        assert result[0]["title"] == "Deferred"
+
+    @pytest.mark.asyncio
+    async def test_backburner_include(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = [
+            {"_id": "t1", "title": "Active"},
+            {"_id": "t2", "title": "Deferred", "backburner": True},
+        ]
+
+        result = await svc.get_inbox(backburner="include")
+        assert len(result) == 2
 
 
 class TestCreateEvent:

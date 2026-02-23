@@ -39,6 +39,9 @@ def format_task(task: dict[str, object]) -> str:
 
     line = f"- {checkbox} **{title}** (id: {task_id})"
 
+    if task.get("backburner"):
+        line += " [backburner]"
+
     due = task.get("dueDate")
     if due:
         line += f" — due: {due}"
@@ -53,6 +56,23 @@ def format_task(task: dict[str, object]) -> str:
         line += f"\n  Notes: {trimmed}"
 
     return line
+
+
+def filter_backburner(
+    tasks: list[dict[str, object]], backburner: str | None
+) -> list[dict[str, object]]:
+    """Filter tasks by backburner status.
+
+    None (default) excludes backburner items, "only" returns only backburner
+    items, "include" returns all items unfiltered.
+    """
+    if backburner is None:
+        return [t for t in tasks if not t.get("backburner")]
+    if backburner == "only":
+        return [t for t in tasks if t.get("backburner")]
+    if backburner == "include":
+        return tasks
+    raise ValueError(f"backburner must be 'only', 'include', or omitted, got '{backburner}'")
 
 
 def format_tasks_list(tasks: list[dict[str, object]], heading: str) -> str:

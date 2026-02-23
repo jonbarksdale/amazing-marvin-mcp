@@ -1,10 +1,13 @@
 # ABOUTME: Tests for response formatting utilities.
 # ABOUTME: Validates markdown conversion, truncation, and notes trimming.
 
+import pytest
+
 from amazing_marvin_mcp.formatting import (
     CHARACTER_LIMIT,
     NOTES_LIMIT,
     TRUNCATION_MESSAGE,
+    filter_backburner,
     format_categories_tree,
     format_labels,
     format_search_results,
@@ -132,6 +135,21 @@ class TestFormatTask:
         result = format_task(task)
         assert "[ ]" in result
         assert "[x]" not in result
+
+    def test_backburner_task_shows_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "Someday task", "backburner": True}
+        result = format_task(task)
+        assert "[backburner]" in result
+
+    def test_non_backburner_task_no_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "Active task", "backburner": False}
+        result = format_task(task)
+        assert "[backburner]" not in result
+
+    def test_missing_backburner_field_no_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "Normal task"}
+        result = format_task(task)
+        assert "[backburner]" not in result
 
 
 class TestFormatTasksList:
@@ -299,3 +317,47 @@ class TestFormatSearchResults:
         result = format_search_results("mixed", matches)
         assert "Real" in result
         assert "string" not in result.split("Mixed")[1]  # "string" shouldn't appear as a task
+
+
+class TestFilterBackburner:
+    def test_default_excludes_backburner(self) -> None:
+        tasks: list[dict[str, object]] = [
+            {"_id": "1", "title": "Active"},
+            {"_id": "2", "title": "Deferred", "backburner": True},
+        ]
+        result = filter_backburner(tasks, None)
+        assert len(result) == 1
+        assert result[0]["title"] == "Active"
+
+    def test_only_returns_backburner_items(self) -> None:
+        tasks: list[dict[str, object]] = [
+            {"_id": "1", "title": "Active"},
+            {"_id": "2", "title": "Deferred", "backburner": True},
+        ]
+        result = filter_backburner(tasks, "only")
+        assert len(result) == 1
+        assert result[0]["title"] == "Deferred"
+
+    def test_include_returns_all(self) -> None:
+        tasks: list[dict[str, object]] = [
+            {"_id": "1", "title": "Active"},
+            {"_id": "2", "title": "Deferred", "backburner": True},
+        ]
+        result = filter_backburner(tasks, "include")
+        assert len(result) == 2
+
+    def test_default_keeps_items_without_backburner_field(self) -> None:
+        tasks: list[dict[str, object]] = [{"_id": "1", "title": "Normal"}]
+        result = filter_backburner(tasks, None)
+        assert len(result) == 1
+
+    def test_default_excludes_backburner_false(self) -> None:
+        """Items with backburner=False should NOT be excluded."""
+        tasks: list[dict[str, object]] = [{"_id": "1", "title": "Active", "backburner": False}]
+        result = filter_backburner(tasks, None)
+        assert len(result) == 1
+
+    def test_invalid_value_raises(self) -> None:
+        tasks: list[dict[str, object]] = [{"_id": "1", "title": "Task"}]
+        with pytest.raises(ValueError, match="backburner"):
+            filter_backburner(tasks, "foo")
