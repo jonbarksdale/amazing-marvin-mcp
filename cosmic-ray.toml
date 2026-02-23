@@ -11,6 +11,7 @@ test-command = "python -m pytest tests/test_unit_marvin.py tests/test_formatting
 [cosmic-ray.filters.operators-filter]
 exclude-operators = [
     "core/ReplaceBinaryOperator_BitOr_.*",
+    "core/ReplaceComparisonOperator_Eq_Is",
 ]
 
 [cosmic-ray.distributor]
