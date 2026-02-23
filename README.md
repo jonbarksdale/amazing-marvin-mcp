@@ -37,12 +37,13 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-## Tools (13)
+## Tools (14)
 
 | Tool | Description |
 |------|-------------|
 | `get_today` | Get tasks and projects scheduled for today |
 | `get_due` | Get overdue tasks and projects |
+| `get_inbox` | Get tasks not assigned to any project or folder |
 | `get_categories` | Get project and folder structure |
 | `get_children` | Get child tasks under a project (accepts name or ID) |
 | `get_labels` | Get all labels |
@@ -60,7 +61,7 @@ Add to your `claude_desktop_config.json`:
 | Prompt | Description |
 |--------|-------------|
 | `plan_my_day` | Review today's tasks, overdue items, and time blocks |
-| `weekly_review` | Review overdue items and suggest cleanup |
+| `weekly_review` | Review overdue items and inbox, suggest cleanup |
 
 ## Library Usage
 
