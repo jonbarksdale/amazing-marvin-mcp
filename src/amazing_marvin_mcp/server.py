@@ -20,6 +20,7 @@ from amazing_marvin_mcp.formatting import (
     format_time_blocks,
 )
 from amazing_marvin_mcp.marvin import MarvinService
+from amazing_marvin_mcp.prompts import register_prompts
 
 mcp = FastMCP("amazing-marvin")
 
@@ -255,33 +256,10 @@ async def track_time(task_id: str, action: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Prompts
+# Prompts — loaded from markdown files in prompts/
 # ---------------------------------------------------------------------------
 
-
-@mcp.prompt()
-def plan_my_day() -> str:
-    """Plan your day by reviewing today's tasks, overdue items, and time blocks."""
-    return (
-        "Help me plan my day. Please:\n"
-        "1. Call get_today to see what's scheduled\n"
-        "2. Call get_due to check for overdue items\n"
-        "3. Call get_time_blocks to see my schedule structure\n"
-        "4. Suggest how to organize my day based on what you find"
-    )
-
-
-@mcp.prompt()
-def weekly_review() -> str:
-    """Review the week — check overdue items and suggest cleanup."""
-    return (
-        "Help me do a weekly review. Please:\n"
-        "1. Call get_due to find all overdue items\n"
-        "2. Call get_inbox to find tasks not assigned to any project\n"
-        "3. For each overdue item, suggest: reschedule, mark done, or delete\n"
-        "4. For each inbox item, suggest: assign to a project, schedule, or delete\n"
-        "5. Summarize what needs attention"
-    )
+register_prompts(mcp)
 
 
 # ---------------------------------------------------------------------------
