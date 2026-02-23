@@ -42,16 +42,16 @@ Add to your `claude_desktop_config.json`:
 | Tool | Description |
 |------|-------------|
 | `get_today` | Get tasks and projects scheduled for today |
-| `get_due` | Get overdue tasks and projects |
-| `get_inbox` | Get tasks not assigned to any project or folder |
+| `get_due` | Get overdue tasks and projects (backburner filter) |
+| `get_inbox` | Get tasks not assigned to any project or folder (backburner filter) |
 | `get_categories` | Get project and folder structure |
-| `get_children` | Get child tasks under a project (accepts name or ID) |
+| `get_children` | Get child tasks under a project, accepts name or ID (backburner filter) |
 | `get_labels` | Get all labels |
 | `get_time_blocks` | Get today's time blocks |
-| `search` | Search projects and folders by name |
+| `search` | Search projects and folders by name (backburner filter) |
 | `create_task` | Create a task (with optional project, dates, notes) |
 | `create_event` | Create a calendar event |
-| `update_task` | Update task fields (title, dates, notes) |
+| `update_task` | Update task fields (title, dates, notes, backburner) |
 | `mark_done` | Mark a task as complete |
 | `delete_task` | Delete a task |
 | `track_time` | Start or stop time tracking |
