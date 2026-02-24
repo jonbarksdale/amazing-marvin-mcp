@@ -353,21 +353,25 @@ class TestMarkDone:
 
     @pytest.mark.asyncio
     async def test_timezone_offset_is_correct(self) -> None:
-        """Verify the offset calculation matches the system timezone."""
+        """Verify the offset calculation for a known non-zero timezone."""
         import datetime
 
         svc, mock = _make_service()
         mock.post.return_value = {"ok": True}
 
-        await svc.mark_done("task1")
-        call_data = mock.post.call_args[1]["data"]
-        offset = call_data["timeZoneOffset"]
+        # Simulate UTC-7 (e.g., US Mountain Time): utcoffset = -7h = -25200s
+        mock_dt = MagicMock()
+        mock_dt.astimezone.return_value.utcoffset.return_value = datetime.timedelta(hours=-7)
 
-        # Compute expected offset independently
-        utc_offset = datetime.datetime.now(datetime.UTC).astimezone().utcoffset()
-        assert utc_offset is not None
-        expected = -int(utc_offset.total_seconds()) // 60
-        assert offset == expected
+        with patch("amazing_marvin_mcp.marvin.datetime") as mock_datetime:
+            mock_datetime.UTC = datetime.UTC
+            mock_datetime.datetime.now.return_value = mock_dt
+
+            await svc.mark_done("task1")
+
+        call_data = mock.post.call_args[1]["data"]
+        # -(-25200) // 60 = 420 minutes west of UTC
+        assert call_data["timeZoneOffset"] == 420
 
 
 class TestUpdateTask:
