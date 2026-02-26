@@ -9,6 +9,7 @@ from typing import Any
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from amazing_marvin_mcp.client import MarvinAPIError
 from amazing_marvin_mcp.formatting import (
@@ -82,12 +83,17 @@ def _handle_errors(
     return wrapper
 
 
+_READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False)
+_WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
+_WRITE_IDEMPOTENT = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True)
+_DESTRUCTIVE = ToolAnnotations(readOnlyHint=False, destructiveHint=True)
+
 # ---------------------------------------------------------------------------
 # Read tools
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_today() -> str:
     """Get tasks and projects scheduled for today."""
@@ -95,7 +101,7 @@ async def get_today() -> str:
     return format_tasks_list(items, "Today")
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_due(backburner: str | None = None) -> str:
     """Get overdue tasks and projects.
@@ -107,7 +113,7 @@ async def get_due(backburner: str | None = None) -> str:
     return format_tasks_list(items, "Overdue")
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_categories() -> str:
     """Get project and folder structure."""
@@ -115,7 +121,7 @@ async def get_categories() -> str:
     return format_categories_tree(items)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_inbox(backburner: str | None = None) -> str:
     """Get tasks in the inbox (not assigned to any project or folder).
@@ -127,7 +133,7 @@ async def get_inbox(backburner: str | None = None) -> str:
     return format_tasks_list(items, "Inbox")
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_children(parent: str, backburner: str | None = None) -> str:
     """Get child tasks under a project or folder. Accepts name or ID.
@@ -143,7 +149,7 @@ async def get_children(parent: str, backburner: str | None = None) -> str:
     return format_tasks_list(items, f"Children of {parent}")
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_labels() -> str:
     """Get all labels."""
@@ -151,7 +157,7 @@ async def get_labels() -> str:
     return format_labels(items)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def get_time_blocks() -> str:
     """Get today's time blocks."""
@@ -159,7 +165,7 @@ async def get_time_blocks() -> str:
     return format_time_blocks(items)
 
 
-@mcp.tool()
+@mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
 async def search(query: str, backburner: str | None = None) -> str:
     """Search projects and folders by name. Returns matches with their tasks.
@@ -176,7 +182,7 @@ async def search(query: str, backburner: str | None = None) -> str:
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 @_handle_errors
 async def create_task(
     title: str,
@@ -206,7 +212,7 @@ async def create_task(
     return f"Created: {format_task(result)}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 @_handle_errors
 async def create_event(
     title: str,
@@ -221,7 +227,7 @@ async def create_event(
     return f"Created event: **{result.get('title', title)}** (id: {result.get('_id', '?')})"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE_IDEMPOTENT)
 @_handle_errors
 async def update_task(
     item_id: str,
@@ -253,7 +259,7 @@ async def update_task(
     return f"Updated: {format_task(result)}"
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE_IDEMPOTENT)
 @_handle_errors
 async def mark_done(item_id: str) -> str:
     """Mark a task as complete."""
@@ -261,7 +267,7 @@ async def mark_done(item_id: str) -> str:
     return f"Marked task {item_id} as done."
 
 
-@mcp.tool()
+@mcp.tool(annotations=_DESTRUCTIVE)
 @_handle_errors
 async def delete_task(item_id: str) -> str:
     """Delete a task."""
@@ -269,7 +275,7 @@ async def delete_task(item_id: str) -> str:
     return f"Deleted task {item_id}."
 
 
-@mcp.tool()
+@mcp.tool(annotations=_WRITE)
 @_handle_errors
 async def track_time(task_id: str, action: str) -> str:
     """Start or stop time tracking on a task. action must be 'START' or 'STOP'."""
