@@ -14,6 +14,7 @@ from mcp.types import ToolAnnotations
 
 from amazing_marvin_mcp.client import MarvinAPIError
 from amazing_marvin_mcp.formatting import (
+    BackburnerFilter,
     format_categories_tree,
     format_labels,
     format_search_results,
@@ -140,7 +141,7 @@ async def get_today() -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def get_due(backburner: Literal["include", "only"] | None = None) -> str:
+async def get_due(backburner: BackburnerFilter = None) -> str:
     """Get overdue tasks and projects.
 
     By default excludes backburner items.
@@ -160,7 +161,7 @@ async def get_categories() -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def get_inbox(backburner: Literal["include", "only"] | None = None) -> str:
+async def get_inbox(backburner: BackburnerFilter = None) -> str:
     """Get tasks in the inbox (not assigned to any project or folder).
 
     By default excludes backburner items.
@@ -172,7 +173,7 @@ async def get_inbox(backburner: Literal["include", "only"] | None = None) -> str
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def get_children(parent: str, backburner: Literal["include", "only"] | None = None) -> str:
+async def get_children(parent: str, backburner: BackburnerFilter = None) -> str:
     """Get child tasks under a project or folder. Accepts name or ID.
 
     By default excludes backburner items.
@@ -204,7 +205,7 @@ async def get_time_blocks() -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def search(query: str, backburner: Literal["include", "only"] | None = None) -> str:
+async def search(query: str, backburner: BackburnerFilter = None) -> str:
     """Search projects and folders by name. Returns matches with their tasks.
 
     By default excludes backburner items.

@@ -3,6 +3,8 @@
 
 from typing import Literal
 
+BackburnerFilter = Literal["include", "only"] | None
+
 CHARACTER_LIMIT: int = 25_000
 NOTES_LIMIT: int = 500
 
@@ -60,7 +62,7 @@ def format_task(task: dict[str, object]) -> str:
 
 
 def filter_backburner(
-    tasks: list[dict[str, object]], backburner: Literal["include", "only"] | None
+    tasks: list[dict[str, object]], backburner: BackburnerFilter
 ) -> list[dict[str, object]]:
     """Filter tasks by backburner status.
 

@@ -5,9 +5,7 @@ import datetime
 from typing import Any, Literal, Self
 
 from amazing_marvin_mcp.client import MarvinClient
-from amazing_marvin_mcp.formatting import filter_backburner
-
-BackburnerFilter = Literal["include", "only"] | None
+from amazing_marvin_mcp.formatting import BackburnerFilter, filter_backburner
 
 
 class MarvinService:
