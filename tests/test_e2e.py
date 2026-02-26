@@ -110,6 +110,32 @@ class TestE2EServer:
         await _connect_and_run(check)
 
     @pytest.mark.asyncio
+    async def test_server_sends_instructions(self) -> None:
+        """Server should include instructions in initialize response."""
+        params = _server_params_no_token()
+        async with (
+            stdio_client(params) as (read_stream, write_stream),
+            ClientSession(read_stream, write_stream) as session,
+        ):
+            result = await session.initialize()
+            assert result.instructions is not None
+            assert len(result.instructions) > 0
+
+    @pytest.mark.asyncio
+    async def test_invalid_date_returns_actionable_error(self) -> None:
+        """Passing an invalid date should return a clear error message."""
+        params = _server_params_no_token()
+        async with (
+            stdio_client(params) as (read_stream, write_stream),
+            ClientSession(read_stream, write_stream) as session,
+        ):
+            await session.initialize()
+            result = await session.call_tool("create_task", {"title": "Test", "day": "not-a-date"})
+            text = result.content[0].text
+            assert "YYYY-MM-DD" in text
+            assert "not-a-date" in text
+
+    @pytest.mark.asyncio
     async def test_missing_token_returns_actionable_error(self) -> None:
         """Calling a tool without MARVIN_API_TOKEN returns an LLM-actionable error."""
         params = _server_params_no_token()
