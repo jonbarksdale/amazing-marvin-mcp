@@ -1,7 +1,9 @@
 # ABOUTME: Tests for the MCP server adapter layer.
 # ABOUTME: Validates tool registration and prompt registration.
 
-from amazing_marvin_mcp.server import mcp
+import pytest
+
+from amazing_marvin_mcp.server import _validate_date, _validate_datetime, mcp
 
 
 class TestServerSetup:
@@ -111,3 +113,25 @@ class TestServerSetup:
         assert ann is not None, "delete_task missing annotations"
         assert ann.readOnlyHint is False
         assert ann.destructiveHint is True
+
+
+class TestDateValidation:
+    def test_valid_date(self) -> None:
+        assert _validate_date("2026-01-15") == "2026-01-15"
+
+    def test_invalid_date_raises(self) -> None:
+        with pytest.raises(ValueError, match="YYYY-MM-DD"):
+            _validate_date("01-15-2026")
+
+    def test_none_date_passes_through(self) -> None:
+        assert _validate_date(None) is None
+
+    def test_valid_datetime(self) -> None:
+        assert _validate_datetime("2026-01-15T09:30:00") == "2026-01-15T09:30:00"
+
+    def test_invalid_datetime_raises(self) -> None:
+        with pytest.raises(ValueError, match="ISO datetime"):
+            _validate_datetime("not-a-datetime")
+
+    def test_none_datetime_passes_through(self) -> None:
+        assert _validate_datetime(None) is None

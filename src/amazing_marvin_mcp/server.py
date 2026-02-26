@@ -1,6 +1,7 @@
 # ABOUTME: MCP server entry point for Amazing Marvin.
 # ABOUTME: Thin adapter that registers tools and delegates to the marvin business logic layer.
 
+import datetime as _dt
 import functools
 import os
 import re
@@ -74,6 +75,30 @@ def _get_service() -> MarvinService:
 def _looks_like_id(value: str) -> bool:
     """Return True if value looks like a Marvin document ID."""
     return bool(_ID_PATTERN.match(value))
+
+
+def _validate_date(value: str | None) -> str | None:
+    """Validate that a date string is YYYY-MM-DD format."""
+    if value is None:
+        return None
+    try:
+        _dt.date.fromisoformat(value)
+    except ValueError:
+        raise ValueError(f"Invalid date '{value}'. Expected YYYY-MM-DD format.") from None
+    return value
+
+
+def _validate_datetime(value: str | None) -> str | None:
+    """Validate that a datetime string is ISO format."""
+    if value is None:
+        return None
+    try:
+        _dt.datetime.fromisoformat(value)
+    except ValueError:
+        raise ValueError(
+            f"Invalid datetime '{value}'. Expected ISO datetime format (e.g. 2026-01-15T09:30:00)."
+        ) from None
+    return value
 
 
 def _handle_errors(
@@ -205,6 +230,8 @@ async def create_task(
     label_ids: list[str] | None = None,
 ) -> str:
     """Create a task. 'parent' can be a project name or ID. Dates use YYYY-MM-DD."""
+    _validate_date(day)
+    _validate_date(due_date)
     svc = _get_service()
     kwargs: dict[str, Any] = {"title": title}
     if day is not None:
@@ -233,6 +260,7 @@ async def create_event(
     note: str | None = None,
 ) -> str:
     """Create a calendar event. 'start' is ISO datetime (e.g. 2026-02-21T09:30:00)."""
+    _validate_datetime(start)
     result = await _get_service().create_event(
         title=title, start=start, duration_minutes=duration_minutes, note=note
     )
@@ -258,8 +286,10 @@ async def update_task(
     if title is not None:
         setters["title"] = title
     if day is not None:
+        _validate_date(day)
         setters["day"] = day
     if due_date is not None:
+        _validate_date(due_date)
         setters["dueDate"] = due_date
     if note is not None:
         setters["note"] = note
