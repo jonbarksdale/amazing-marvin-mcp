@@ -78,6 +78,10 @@ class TestServerSetup:
             assert ann.destructiveHint is False, f"{name} should not be destructive"
             assert ann.idempotentHint is True, f"{name} should be idempotent"
 
+    def test_server_has_instructions(self) -> None:
+        assert mcp.instructions is not None
+        assert len(mcp.instructions) > 0
+
     def test_destructive_tools_have_destructive_annotation(self) -> None:
         tools = {t.name: t for t in mcp._tool_manager.list_tools()}
         ann = tools["delete_task"].annotations

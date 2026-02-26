@@ -23,7 +23,19 @@ from amazing_marvin_mcp.formatting import (
 from amazing_marvin_mcp.marvin import MarvinService
 from amazing_marvin_mcp.prompts import register_prompts
 
-mcp = FastMCP("amazing-marvin")
+mcp = FastMCP(
+    "amazing-marvin",
+    instructions=(
+        "Amazing Marvin is a personal task manager. "
+        "Use get_today for daily planning, get_due for overdue items, "
+        "and get_inbox for unassigned tasks. "
+        "Use search to find projects by name, then get_children to list their tasks. "
+        "The parent parameter on create_task and get_children accepts human-readable "
+        "project names — no need to look up IDs first. "
+        "Dates use YYYY-MM-DD format. "
+        "For time tracking, action must be 'START' or 'STOP'."
+    ),
+)
 
 _service: MarvinService | None = None
 
