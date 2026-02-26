@@ -1,6 +1,7 @@
 # ABOUTME: Response formatting utilities for Amazing Marvin data.
 # ABOUTME: Converts API JSON to markdown and handles response trimming.
 
+from typing import Literal
 
 CHARACTER_LIMIT: int = 25_000
 NOTES_LIMIT: int = 500
@@ -59,7 +60,7 @@ def format_task(task: dict[str, object]) -> str:
 
 
 def filter_backburner(
-    tasks: list[dict[str, object]], backburner: str | None
+    tasks: list[dict[str, object]], backburner: Literal["include", "only"] | None
 ) -> list[dict[str, object]]:
     """Filter tasks by backburner status.
 

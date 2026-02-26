@@ -82,6 +82,29 @@ class TestServerSetup:
         assert mcp.instructions is not None
         assert len(mcp.instructions) > 0
 
+    def test_backburner_params_use_literal_type(self) -> None:
+        """Backburner params should expose allowed values in JSON schema."""
+        tools = {t.name: t for t in mcp._tool_manager.list_tools()}
+        for name in ("get_due", "get_inbox", "get_children", "search"):
+            schema = tools[name].parameters
+            backburner_prop = schema["properties"]["backburner"]
+            # Literal types produce an "enum" key in JSON schema (possibly nested in anyOf)
+            any_of = backburner_prop.get("anyOf", [])
+            has_enum = "enum" in backburner_prop or any(
+                "enum" in item for item in any_of if isinstance(item, dict)
+            )
+            assert has_enum, f"{name}: backburner should use Literal type for schema hints"
+
+    def test_track_time_action_uses_literal_type(self) -> None:
+        """track_time action should expose START/STOP in JSON schema."""
+        tools = {t.name: t for t in mcp._tool_manager.list_tools()}
+        schema = tools["track_time"].parameters
+        action_prop = schema["properties"]["action"]
+        has_enum = "enum" in action_prop or any(
+            "enum" in item for item in action_prop.get("anyOf", []) if isinstance(item, dict)
+        )
+        assert has_enum, "track_time: action should use Literal type for schema hints"
+
     def test_destructive_tools_have_destructive_annotation(self) -> None:
         tools = {t.name: t for t in mcp._tool_manager.list_tools()}
         ann = tools["delete_task"].annotations

@@ -5,7 +5,7 @@ import functools
 import os
 import re
 from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 from mcp.server.fastmcp import FastMCP
@@ -115,7 +115,7 @@ async def get_today() -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def get_due(backburner: str | None = None) -> str:
+async def get_due(backburner: Literal["include", "only"] | None = None) -> str:
     """Get overdue tasks and projects.
 
     By default excludes backburner items.
@@ -135,7 +135,7 @@ async def get_categories() -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def get_inbox(backburner: str | None = None) -> str:
+async def get_inbox(backburner: Literal["include", "only"] | None = None) -> str:
     """Get tasks in the inbox (not assigned to any project or folder).
 
     By default excludes backburner items.
@@ -147,7 +147,7 @@ async def get_inbox(backburner: str | None = None) -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def get_children(parent: str, backburner: str | None = None) -> str:
+async def get_children(parent: str, backburner: Literal["include", "only"] | None = None) -> str:
     """Get child tasks under a project or folder. Accepts name or ID.
 
     By default excludes backburner items.
@@ -179,7 +179,7 @@ async def get_time_blocks() -> str:
 
 @mcp.tool(annotations=_READ_ONLY)
 @_handle_errors
-async def search(query: str, backburner: str | None = None) -> str:
+async def search(query: str, backburner: Literal["include", "only"] | None = None) -> str:
     """Search projects and folders by name. Returns matches with their tasks.
 
     By default excludes backburner items.
@@ -289,7 +289,7 @@ async def delete_task(item_id: str) -> str:
 
 @mcp.tool(annotations=_WRITE)
 @_handle_errors
-async def track_time(task_id: str, action: str) -> str:
+async def track_time(task_id: str, action: Literal["START", "STOP"]) -> str:
     """Start or stop time tracking on a task. action must be 'START' or 'STOP'."""
     await _get_service().track_time(task_id, action)
     verb = "started" if action == "START" else "stopped"

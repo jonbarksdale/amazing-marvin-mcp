@@ -2,10 +2,12 @@
 # ABOUTME: Provides intent-oriented operations with name resolution, caching, and timezones.
 
 import datetime
-from typing import Any, Self
+from typing import Any, Literal, Self
 
 from amazing_marvin_mcp.client import MarvinClient
 from amazing_marvin_mcp.formatting import filter_backburner
+
+BackburnerFilter = Literal["include", "only"] | None
 
 
 class MarvinService:
@@ -46,7 +48,7 @@ class MarvinService:
         result: list[dict[str, Any]] = await self._client.get("/todayItems")
         return result
 
-    async def get_due(self, backburner: str | None = None) -> list[dict[str, Any]]:
+    async def get_due(self, backburner: BackburnerFilter = None) -> list[dict[str, Any]]:
         """Return overdue items."""
         result: list[dict[str, Any]] = await self._client.get("/dueItems")
         return filter_backburner(result, backburner)
@@ -63,7 +65,7 @@ class MarvinService:
         self,
         parent_id: str | None = None,
         parent_name: str | None = None,
-        backburner: str | None = None,
+        backburner: BackburnerFilter = None,
     ) -> list[dict[str, Any]]:
         """Return child tasks under a parent category.
 
@@ -85,7 +87,7 @@ class MarvinService:
         )
         return filter_backburner(result, backburner)
 
-    async def get_inbox(self, backburner: str | None = None) -> list[dict[str, Any]]:
+    async def get_inbox(self, backburner: BackburnerFilter = None) -> list[dict[str, Any]]:
         """Return tasks in the inbox (not assigned to any project or folder)."""
         result: list[dict[str, Any]] = await self._client.get(
             "/children", params={"parentId": "unassigned"}
@@ -127,7 +129,7 @@ class MarvinService:
         raise ValueError(f"No category matching '{name}' found.")
 
     async def search(
-        self, query: str, max_results: int = 5, backburner: str | None = None
+        self, query: str, max_results: int = 5, backburner: BackburnerFilter = None
     ) -> list[dict[str, Any]]:
         """Search categories by name and return matches with their children.
 
@@ -237,7 +239,7 @@ class MarvinService:
         self.invalidate_caches()
         return result
 
-    async def track_time(self, task_id: str, action: str) -> dict[str, Any]:
+    async def track_time(self, task_id: str, action: Literal["START", "STOP"]) -> dict[str, Any]:
         """Start or stop time tracking. action must be 'START' or 'STOP'."""
         if action not in ("START", "STOP"):
             raise ValueError(f"action must be START or STOP, got '{action}'")
