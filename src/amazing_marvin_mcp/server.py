@@ -228,7 +228,7 @@ async def create_task(
     due_date: str | None = None,
     parent: str | None = None,
     note: str | None = None,
-    label_ids: list[str] | None = None,
+    labels: list[str] | None = None,
 ) -> str:
     """Create a task. 'parent' can be a project name or ID. Dates use YYYY-MM-DD."""
     _validate_date(day)
@@ -241,8 +241,18 @@ async def create_task(
         kwargs["due_date"] = due_date
     if note is not None:
         kwargs["note"] = note
-    if label_ids is not None:
-        kwargs["label_ids"] = label_ids
+    if labels is not None:
+        resolved: list[str] = []
+        names_to_resolve: list[str] = []
+        # Separate IDs (pass through) from names (need resolution)
+        for label in labels:
+            if _looks_like_id(label):
+                resolved.append(label)
+            else:
+                names_to_resolve.append(label)
+        if names_to_resolve:
+            resolved.extend(await svc.resolve_label_ids(names_to_resolve))
+        kwargs["label_ids"] = resolved
     if parent is not None:
         if _looks_like_id(parent):
             kwargs["parent_id"] = parent

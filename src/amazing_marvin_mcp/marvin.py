@@ -126,6 +126,28 @@ class MarvinService:
 
         raise ValueError(f"No category matching '{name}' found.")
 
+    async def resolve_label_ids(self, labels: list[str]) -> list[str]:
+        """Resolve label names to IDs via case-insensitive exact match.
+
+        Each entry is matched against cached labels by title. Unlike
+        _resolve_parent_id, no substring matching is performed — only
+        exact (case-insensitive) matches are accepted.
+
+        Raises ValueError if any label name has no match.
+        """
+        all_labels = await self.get_labels()
+        resolved: list[str] = []
+        for label in labels:
+            label_lower = label.lower()
+            match = next(
+                (lb for lb in all_labels if lb.get("title", "").lower() == label_lower),
+                None,
+            )
+            if match is None:
+                raise ValueError(f"No label matching '{label}' found.")
+            resolved.append(str(match["_id"]))
+        return resolved
+
     async def search(
         self, query: str, max_results: int = 5, backburner: BackburnerFilter = None
     ) -> list[dict[str, Any]]:

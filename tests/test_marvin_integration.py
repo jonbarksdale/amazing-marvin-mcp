@@ -107,12 +107,15 @@ class TestWriteLifecycle:
         labels = await service.get_labels()
         if not labels:
             pytest.skip("No labels in account")
+        label_name = labels[0]["title"]
         label_id = labels[0]["_id"]
 
+        # Resolve label name to ID via resolve_label_ids, then pass IDs to create_task
+        resolved_ids = await service.resolve_label_ids([label_name])
         task = await service.create_task(
             title="MCP Label Test",
             parent_id=sandbox_parent_id,
-            label_ids=[label_id],
+            label_ids=resolved_ids,
         )
         try:
             assert label_id in task.get("labelIds", [])

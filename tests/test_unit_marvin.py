@@ -568,6 +568,77 @@ class TestGetInbox:
         assert len(result) == 2
 
 
+class TestResolveLabelIds:
+    @pytest.mark.asyncio
+    async def test_exact_match(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        result = await svc.resolve_label_ids(["Urgent"])
+        assert result == ["lbl1"]
+
+    @pytest.mark.asyncio
+    async def test_case_insensitive_match(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        result = await svc.resolve_label_ids(["urgent"])
+        assert result == ["lbl1"]
+
+    @pytest.mark.asyncio
+    async def test_case_insensitive_match_uppercase(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        result = await svc.resolve_label_ids(["LOW PRIORITY"])
+        assert result == ["lbl2"]
+
+    @pytest.mark.asyncio
+    async def test_multiple_labels(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        result = await svc.resolve_label_ids(["Urgent", "Low Priority"])
+        assert result == ["lbl1", "lbl2"]
+
+    @pytest.mark.asyncio
+    async def test_no_match_raises(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        with pytest.raises(ValueError, match="No label matching 'nonexistent'"):
+            await svc.resolve_label_ids(["nonexistent"])
+
+    @pytest.mark.asyncio
+    async def test_no_substring_matching(self) -> None:
+        """Only exact matches should work, not substring matches."""
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        with pytest.raises(ValueError, match="No label matching 'Urg'"):
+            await svc.resolve_label_ids(["Urg"])
+
+    @pytest.mark.asyncio
+    async def test_empty_list_returns_empty(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        result = await svc.resolve_label_ids([])
+        assert result == []
+
+    @pytest.mark.asyncio
+    async def test_uses_labels_cache(self) -> None:
+        """Should use cached labels, not fetch every time."""
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_LABELS
+
+        await svc.resolve_label_ids(["Urgent"])
+        await svc.resolve_label_ids(["Low Priority"])
+
+        # get_labels caches after first call, so only one GET
+        mock.get.assert_called_once_with("/labels")
+
+
 class TestCreateEvent:
     @pytest.mark.asyncio
     async def test_converts_duration_to_milliseconds(self) -> None:
