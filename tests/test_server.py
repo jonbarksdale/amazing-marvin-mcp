@@ -19,6 +19,7 @@ class TestServerSetup:
             "get_time_blocks",
             "search",
             "create_task",
+            "create_project",
             "create_event",
             "update_item",
             "mark_done",
@@ -36,7 +37,7 @@ class TestServerSetup:
 
     def test_tool_count(self) -> None:
         tools = mcp._tool_manager.list_tools()
-        assert len(tools) == 14  # 8 read + 6 write
+        assert len(tools) == 15  # 8 read + 7 write
 
     def test_read_tools_have_read_only_annotation(self) -> None:
         read_tools = {
@@ -59,6 +60,7 @@ class TestServerSetup:
     def test_write_tools_have_write_annotation(self) -> None:
         write_tools = {
             "create_task",
+            "create_project",
             "create_event",
             "track_time",
         }

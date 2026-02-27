@@ -32,8 +32,9 @@ mcp = FastMCP(
         "Use get_today for daily planning, get_due for overdue items, "
         "and get_inbox for unassigned tasks. "
         "Use search to find projects by name, then get_children to list their tasks. "
-        "The parent parameter on create_task and get_children accepts human-readable "
-        "project names — no need to look up IDs first. "
+        "Use create_project to create projects or categories (folders). "
+        "The parent parameter on create_task, create_project, and get_children accepts "
+        "human-readable project names — no need to look up IDs first. "
         "Dates use YYYY-MM-DD format. "
         "For time tracking, action must be 'START' or 'STOP'."
     ),
@@ -255,6 +256,48 @@ async def create_task(
         else:
             kwargs["parent_name"] = parent
     result = await svc.create_task(**kwargs)
+    return f"Created: {format_task(result)}"
+
+
+@mcp.tool(annotations=_WRITE)
+@_handle_errors
+async def create_project(
+    title: str,
+    type: Literal["project", "category"] = "project",  # noqa: A002
+    parent: str | None = None,
+    note: str | None = None,
+    day: str | None = None,
+    due_date: str | None = None,
+    labels: list[str] | None = None,
+    priority: Literal["low", "mid", "high"] | None = None,
+) -> str:
+    """Create a project or category. 'parent' can be a name or ID. Dates use YYYY-MM-DD."""
+    _validate_date(day)
+    _validate_date(due_date)
+    svc = _get_service()
+    kwargs: dict[str, Any] = {"title": title, "type": type}
+    if day is not None:
+        kwargs["day"] = day
+    if due_date is not None:
+        kwargs["due_date"] = due_date
+    if note is not None:
+        kwargs["note"] = note
+    if priority is not None:
+        kwargs["priority"] = priority
+    if labels is not None:
+        names_to_resolve = [lb for lb in labels if not _looks_like_id(lb)]
+        resolved_names = await svc.resolve_label_ids(names_to_resolve) if names_to_resolve else []
+        name_iter = iter(resolved_names)
+        # Preserve original order: replace names with resolved IDs in place
+        kwargs["label_ids"] = [
+            label if _looks_like_id(label) else next(name_iter) for label in labels
+        ]
+    if parent is not None:
+        if _looks_like_id(parent):
+            kwargs["parent_id"] = parent
+        else:
+            kwargs["parent_name"] = parent
+    result = await svc.create_project(**kwargs)
     return f"Created: {format_task(result)}"
 
 

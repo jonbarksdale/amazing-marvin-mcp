@@ -210,6 +210,39 @@ class MarvinService:
         self.invalidate_caches()
         return result
 
+    async def create_project(
+        self,
+        title: str,
+        type: str = "project",  # noqa: A002
+        parent_id: str | None = None,
+        parent_name: str | None = None,
+        note: str | None = None,
+        day: str | None = None,
+        due_date: str | None = None,
+        label_ids: list[str] | None = None,
+        priority: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a project or category. Resolves parent_name to ID if provided."""
+        body: dict[str, Any] = {"title": title, "type": type}
+        if parent_name is not None:
+            parent_id = await self._resolve_parent_id(parent_name)
+        if parent_id is not None:
+            body["parentId"] = parent_id
+        if day is not None:
+            body["day"] = day
+        if due_date is not None:
+            body["dueDate"] = due_date
+        if label_ids is not None:
+            body["labelIds"] = label_ids
+        if note is not None:
+            body["note"] = note
+        if priority is not None:
+            body["priority"] = priority
+
+        result: dict[str, Any] = await self._client.post("/addProject", data=body)
+        self.invalidate_caches()
+        return result
+
     async def create_event(
         self,
         title: str,

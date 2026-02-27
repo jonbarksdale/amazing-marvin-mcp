@@ -151,6 +151,27 @@ class TestFormatTask:
         result = format_task(task)
         assert "[backburner]" not in result
 
+    def test_project_type_shows_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "My Project", "type": "project"}
+        result = format_task(task)
+        assert "[project]" in result
+
+    def test_category_type_shows_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "My Folder", "type": "category"}
+        result = format_task(task)
+        assert "[category]" in result
+
+    def test_task_type_no_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "A task", "type": "task"}
+        result = format_task(task)
+        assert "[task]" not in result
+
+    def test_missing_type_no_indicator(self) -> None:
+        task = {"_id": "abc123", "title": "A task"}
+        result = format_task(task)
+        assert "[project]" not in result
+        assert "[category]" not in result
+
 
 class TestFormatTasksList:
     def test_empty_list(self) -> None:

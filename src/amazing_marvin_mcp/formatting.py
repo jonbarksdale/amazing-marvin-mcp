@@ -42,6 +42,10 @@ def format_task(task: dict[str, object]) -> str:
 
     line = f"- {checkbox} **{title}** (id: {task_id})"
 
+    item_type = task.get("type")
+    if item_type in ("project", "category"):
+        line += f" [{item_type}]"
+
     if task.get("backburner"):
         line += " [backburner]"
 

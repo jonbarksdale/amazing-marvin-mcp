@@ -18,6 +18,7 @@ EXPECTED_TOOLS = {
     "get_inbox",
     "search",
     "create_task",
+    "create_project",
     "create_event",
     "update_item",
     "delete_item",

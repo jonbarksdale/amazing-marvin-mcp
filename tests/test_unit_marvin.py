@@ -639,6 +639,80 @@ class TestResolveLabelIds:
         mock.get.assert_called_once_with("/labels")
 
 
+class TestCreateProject:
+    @pytest.mark.asyncio
+    async def test_basic_create(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "proj1", "title": "My Project", "type": "project"}
+
+        result = await svc.create_project(title="My Project")
+        assert result["_id"] == "proj1"
+        mock.post.assert_called_once_with(
+            "/addProject", data={"title": "My Project", "type": "project"}
+        )
+
+    @pytest.mark.asyncio
+    async def test_create_category(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "cat1", "title": "My Folder", "type": "category"}
+
+        result = await svc.create_project(title="My Folder", type="category")
+        assert result["type"] == "category"
+        call_data = mock.post.call_args[1]["data"]
+        assert call_data["type"] == "category"
+
+    @pytest.mark.asyncio
+    async def test_create_with_parent_name_resolves(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_CATEGORIES
+        mock.post.return_value = {"_id": "proj1", "title": "Sub Project", "type": "project"}
+
+        await svc.create_project(title="Sub Project", parent_name="Work")
+        call_data = mock.post.call_args[1]["data"]
+        assert call_data["parentId"] == "cat1"
+
+    @pytest.mark.asyncio
+    async def test_create_invalidates_caches(self) -> None:
+        svc, mock = _make_service()
+        mock.get.return_value = SAMPLE_CATEGORIES
+        mock.post.return_value = {"_id": "proj1", "title": "Test", "type": "project"}
+
+        await svc.get_categories()
+        await svc.get_labels()
+        assert svc._categories_cache is not None
+
+        await svc.create_project(title="Test")
+        assert svc._categories_cache is None
+        assert svc._labels_cache is None
+
+    @pytest.mark.asyncio
+    async def test_create_with_all_fields(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "proj1", "title": "Full Project", "type": "project"}
+
+        await svc.create_project(
+            title="Full Project",
+            type="project",
+            parent_id="cat1",
+            day="2026-01-01",
+            due_date="2026-01-05",
+            label_ids=["lbl1"],
+            note="A note",
+            priority="high",
+        )
+        call_data = mock.post.call_args[1]["data"]
+        assert call_data == {
+            "title": "Full Project",
+            "type": "project",
+            "parentId": "cat1",
+            "day": "2026-01-01",
+            "dueDate": "2026-01-05",
+            "labelIds": ["lbl1"],
+            "note": "A note",
+            "priority": "high",
+        }
+
+
 class TestCreateEvent:
     @pytest.mark.asyncio
     async def test_converts_duration_to_milliseconds(self) -> None:
