@@ -121,3 +121,41 @@ class TestWriteLifecycle:
             assert label_id in task.get("labelIds", [])
         finally:
             await service.delete_item(task["_id"])
+
+
+class TestProjectLifecycle:
+    """Lifecycle tests covering project and category create, update, and delete."""
+
+    @pytest.mark.asyncio
+    async def test_project_crud_lifecycle(
+        self, service: MarvinService, sandbox_parent_id: str
+    ) -> None:
+        project = await service.create_project(
+            title="MCP Project Test", parent_id=sandbox_parent_id
+        )
+        project_id = project["_id"]
+        try:
+            assert "_id" in project
+            assert project["title"] == "MCP Project Test"
+            assert project.get("type") == "project"
+
+            updated = await service.update_item(
+                project_id, setters={"title": "MCP Project Updated"}
+            )
+            assert updated is not None
+            assert updated.get("title") == "MCP Project Updated"
+        finally:
+            await service.delete_item(project_id)
+
+    @pytest.mark.asyncio
+    async def test_category_creation(self, service: MarvinService, sandbox_parent_id: str) -> None:
+        category = await service.create_project(
+            title="MCP Category Test", type="category", parent_id=sandbox_parent_id
+        )
+        category_id = category["_id"]
+        try:
+            assert "_id" in category
+            assert category["title"] == "MCP Category Test"
+            assert category.get("type") == "category"
+        finally:
+            await service.delete_item(category_id)
