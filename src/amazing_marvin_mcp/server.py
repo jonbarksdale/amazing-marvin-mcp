@@ -242,17 +242,13 @@ async def create_task(
     if note is not None:
         kwargs["note"] = note
     if labels is not None:
-        resolved: list[str] = []
-        names_to_resolve: list[str] = []
-        # Separate IDs (pass through) from names (need resolution)
-        for label in labels:
-            if _looks_like_id(label):
-                resolved.append(label)
-            else:
-                names_to_resolve.append(label)
-        if names_to_resolve:
-            resolved.extend(await svc.resolve_label_ids(names_to_resolve))
-        kwargs["label_ids"] = resolved
+        names_to_resolve = [lb for lb in labels if not _looks_like_id(lb)]
+        resolved_names = await svc.resolve_label_ids(names_to_resolve) if names_to_resolve else []
+        name_iter = iter(resolved_names)
+        # Preserve original order: replace names with resolved IDs in place
+        kwargs["label_ids"] = [
+            label if _looks_like_id(label) else next(name_iter) for label in labels
+        ]
     if parent is not None:
         if _looks_like_id(parent):
             kwargs["parent_id"] = parent

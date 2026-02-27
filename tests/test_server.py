@@ -3,7 +3,7 @@
 
 import pytest
 
-from amazing_marvin_mcp.server import _validate_date, _validate_datetime, mcp
+from amazing_marvin_mcp.server import _looks_like_id, _validate_date, _validate_datetime, mcp
 
 
 class TestServerSetup:
@@ -135,3 +135,23 @@ class TestDateValidation:
 
     def test_none_datetime_passes_through(self) -> None:
         assert _validate_datetime(None) is None
+
+
+class TestLooksLikeId:
+    def test_mongo_object_id(self) -> None:
+        assert _looks_like_id("42c312949028ab5b371a608847cef9a6") is True
+
+    def test_uuid(self) -> None:
+        assert _looks_like_id("980d7516-a0ce-4903-91f5-b37bc8180ca5") is True
+
+    def test_short_hex_is_not_id(self) -> None:
+        assert _looks_like_id("abc123") is False
+
+    def test_human_readable_name_is_not_id(self) -> None:
+        assert _looks_like_id("Urgent") is False
+
+    def test_empty_string_is_not_id(self) -> None:
+        assert _looks_like_id("") is False
+
+    def test_mixed_case_hex_is_id(self) -> None:
+        assert _looks_like_id("42C312949028AB5B371A608847CEF9A6") is True
