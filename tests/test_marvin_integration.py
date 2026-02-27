@@ -55,7 +55,7 @@ class TestBackburnerFiltering:
         task_id = task["_id"]
         try:
             # Move task to backburner
-            updated = await service.update_task(task_id, setters={"backburner": True})
+            updated = await service.update_item(task_id, setters={"backburner": True})
             assert updated.get("backburner") is True
 
             # Default filter should exclude it
@@ -75,7 +75,7 @@ class TestBackburnerFiltering:
             for t in bb_children:
                 assert t.get("backburner") is True
         finally:
-            await service.delete_task(task_id)
+            await service.delete_item(task_id)
 
 
 class TestWriteLifecycle:
@@ -90,7 +90,7 @@ class TestWriteLifecycle:
         try:
             assert "_id" in task
 
-            updated = await service.update_task(task_id, setters={"title": "MCP Updated"})
+            updated = await service.update_item(task_id, setters={"title": "MCP Updated"})
             assert updated is not None
             # /doc/update returns a full task object
             assert updated.get("title") == "MCP Updated"
@@ -98,7 +98,7 @@ class TestWriteLifecycle:
             done_result = await service.mark_done(task_id)
             assert done_result is not None
         finally:
-            await service.delete_task(task_id)
+            await service.delete_item(task_id)
 
     @pytest.mark.asyncio
     async def test_create_task_with_labels(
@@ -117,4 +117,4 @@ class TestWriteLifecycle:
         try:
             assert label_id in task.get("labelIds", [])
         finally:
-            await service.delete_task(task["_id"])
+            await service.delete_item(task["_id"])

@@ -51,9 +51,9 @@ Add to your `claude_desktop_config.json`:
 | `search` | Search projects and folders by name (backburner filter) |
 | `create_task` | Create a task (with optional project, dates, notes) |
 | `create_event` | Create a calendar event |
-| `update_task` | Update task fields (title, dates, notes, backburner) |
+| `update_item` | Update task, project, or category fields (title, dates, notes, backburner) |
 | `mark_done` | Mark a task as complete |
-| `delete_task` | Delete a task |
+| `delete_item` | Delete a task, project, or category |
 | `track_time` | Start or stop time tracking |
 
 ## Prompts (2)

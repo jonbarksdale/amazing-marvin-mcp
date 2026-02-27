@@ -206,12 +206,12 @@ class MarvinService:
         result: dict[str, Any] = await self._client.post("/addEvent", data=body)
         return result
 
-    async def update_task(
+    async def update_item(
         self,
         item_id: str,
         setters: dict[str, Any],
     ) -> dict[str, Any]:
-        """Update task fields. Converts setters dict to API format."""
+        """Update task, project, or category fields. Converts setters dict to API format."""
         api_setters = [{"key": k, "val": v} for k, v in setters.items()]
         body: dict[str, Any] = {"itemId": item_id, "setters": api_setters}
         result: dict[str, Any] = await self._client.post("/doc/update", data=body)
@@ -229,8 +229,8 @@ class MarvinService:
         result: dict[str, Any] = await self._client.post("/markDone", data=body)
         return result
 
-    async def delete_task(self, item_id: str) -> dict[str, Any]:
-        """Delete a task."""
+    async def delete_item(self, item_id: str) -> dict[str, Any]:
+        """Delete a task, project, or category."""
         body: dict[str, Any] = {"itemId": item_id}
         result: dict[str, Any] = await self._client.post("/doc/delete", data=body)
         # Invalidate categories cache since a project may have been deleted

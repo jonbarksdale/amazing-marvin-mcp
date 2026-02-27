@@ -22,7 +22,7 @@ It is never logged, never included in error messages, and excluded from
 ## Authorization
 
 MCP does not define an authorization layer. All 13 tools — including destructive
-operations like `delete_task` and `mark_done` — are available to any connected
+operations like `delete_item` and `mark_done` — are available to any connected
 MCP client. The STDIO transport model mitigates this: only the process that
 launched the server has access.
 

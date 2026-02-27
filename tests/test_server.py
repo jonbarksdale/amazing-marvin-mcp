@@ -20,9 +20,9 @@ class TestServerSetup:
             "search",
             "create_task",
             "create_event",
-            "update_task",
+            "update_item",
             "mark_done",
-            "delete_task",
+            "delete_item",
             "track_time",
         }
         missing = expected - tool_names
@@ -71,7 +71,7 @@ class TestServerSetup:
             assert ann.idempotentHint is None, f"{name} should not be idempotent"
 
     def test_idempotent_tools_have_idempotent_annotation(self) -> None:
-        idempotent_tools = {"update_task", "mark_done"}
+        idempotent_tools = {"update_item", "mark_done"}
         tools = {t.name: t for t in mcp._tool_manager.list_tools()}
         for name in idempotent_tools:
             ann = tools[name].annotations
@@ -109,8 +109,8 @@ class TestServerSetup:
 
     def test_destructive_tools_have_destructive_annotation(self) -> None:
         tools = {t.name: t for t in mcp._tool_manager.list_tools()}
-        ann = tools["delete_task"].annotations
-        assert ann is not None, "delete_task missing annotations"
+        ann = tools["delete_item"].annotations
+        assert ann is not None, "delete_item missing annotations"
         assert ann.readOnlyHint is False
         assert ann.destructiveHint is True
 

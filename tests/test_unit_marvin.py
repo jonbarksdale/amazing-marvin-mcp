@@ -306,7 +306,7 @@ class TestCreateTask:
         }
 
 
-class TestDeleteTask:
+class TestDeleteItem:
     @pytest.mark.asyncio
     async def test_delete_invalidates_caches(self) -> None:
         svc, mock = _make_service()
@@ -316,7 +316,7 @@ class TestDeleteTask:
         await svc.get_categories()
         assert svc._categories_cache is not None
 
-        await svc.delete_task("task1")
+        await svc.delete_item("task1")
         assert svc._categories_cache is None
 
 
@@ -374,13 +374,13 @@ class TestMarkDone:
         assert call_data["timeZoneOffset"] == 420
 
 
-class TestUpdateTask:
+class TestUpdateItem:
     @pytest.mark.asyncio
     async def test_converts_setters_to_api_format(self) -> None:
         svc, mock = _make_service()
         mock.post.return_value = {"_id": "t1", "title": "Updated"}
 
-        await svc.update_task("t1", setters={"title": "Updated", "day": "2026-01-01"})
+        await svc.update_item("t1", setters={"title": "Updated", "day": "2026-01-01"})
         call_data = mock.post.call_args[1]["data"]
         assert call_data["itemId"] == "t1"
         setters = call_data["setters"]
@@ -388,13 +388,13 @@ class TestUpdateTask:
         assert {"key": "day", "val": "2026-01-01"} in setters
 
 
-class TestUpdateTaskBackburner:
+class TestUpdateItemBackburner:
     @pytest.mark.asyncio
     async def test_backburner_setter_passed_to_api(self) -> None:
         svc, mock = _make_service()
         mock.post.return_value = {"_id": "t1", "title": "Task", "backburner": True}
 
-        await svc.update_task("t1", setters={"backburner": True})
+        await svc.update_item("t1", setters={"backburner": True})
         call_data = mock.post.call_args[1]["data"]
         assert {"key": "backburner", "val": True} in call_data["setters"]
 

@@ -19,8 +19,8 @@ EXPECTED_TOOLS = {
     "search",
     "create_task",
     "create_event",
-    "update_task",
-    "delete_task",
+    "update_item",
+    "delete_item",
     "mark_done",
     "track_time",
 }

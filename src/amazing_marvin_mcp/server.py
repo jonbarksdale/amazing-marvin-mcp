@@ -270,7 +270,7 @@ async def create_event(
 
 @mcp.tool(annotations=_WRITE_IDEMPOTENT)
 @_handle_errors
-async def update_task(
+async def update_item(
     item_id: str,
     title: str | None = None,
     day: str | None = None,
@@ -278,9 +278,9 @@ async def update_task(
     note: str | None = None,
     backburner: bool | None = None,
 ) -> str:
-    """Update task fields. Pass only the fields you want to change.
+    """Update task, project, or category fields. Pass only the fields you want to change.
 
-    Set backburner=true to move a task to the backburner,
+    Set backburner=true to move an item to the backburner,
     or backburner=false to restore it.
     """
     setters: dict[str, Any] = {}
@@ -298,7 +298,7 @@ async def update_task(
         setters["backburner"] = backburner
     if not setters:
         return "Error: No fields provided to update."
-    result = await _get_service().update_task(item_id, setters)
+    result = await _get_service().update_item(item_id, setters)
     return f"Updated: {format_task(result)}"
 
 
@@ -312,10 +312,10 @@ async def mark_done(item_id: str) -> str:
 
 @mcp.tool(annotations=_DESTRUCTIVE)
 @_handle_errors
-async def delete_task(item_id: str) -> str:
-    """Delete a task."""
-    await _get_service().delete_task(item_id)
-    return f"Deleted task {item_id}."
+async def delete_item(item_id: str) -> str:
+    """Delete a task, project, or category."""
+    await _get_service().delete_item(item_id)
+    return f"Deleted item {item_id}."
 
 
 @mcp.tool(annotations=_WRITE)
