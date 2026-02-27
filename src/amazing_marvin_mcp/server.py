@@ -122,6 +122,14 @@ def _handle_errors(
     return wrapper
 
 
+async def _resolve_labels(svc: MarvinService, labels: list[str]) -> list[str]:
+    """Resolve a list of label names/IDs to IDs, preserving order."""
+    names_to_resolve = [lb for lb in labels if not _looks_like_id(lb)]
+    resolved_names = await svc.resolve_label_ids(names_to_resolve) if names_to_resolve else []
+    name_iter = iter(resolved_names)
+    return [label if _looks_like_id(label) else next(name_iter) for label in labels]
+
+
 _READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False)
 _WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 _WRITE_IDEMPOTENT = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True)
@@ -243,13 +251,7 @@ async def create_task(
     if note is not None:
         kwargs["note"] = note
     if labels is not None:
-        names_to_resolve = [lb for lb in labels if not _looks_like_id(lb)]
-        resolved_names = await svc.resolve_label_ids(names_to_resolve) if names_to_resolve else []
-        name_iter = iter(resolved_names)
-        # Preserve original order: replace names with resolved IDs in place
-        kwargs["label_ids"] = [
-            label if _looks_like_id(label) else next(name_iter) for label in labels
-        ]
+        kwargs["label_ids"] = await _resolve_labels(svc, labels)
     if parent is not None:
         if _looks_like_id(parent):
             kwargs["parent_id"] = parent
@@ -285,13 +287,7 @@ async def create_project(
     if priority is not None:
         kwargs["priority"] = priority
     if labels is not None:
-        names_to_resolve = [lb for lb in labels if not _looks_like_id(lb)]
-        resolved_names = await svc.resolve_label_ids(names_to_resolve) if names_to_resolve else []
-        name_iter = iter(resolved_names)
-        # Preserve original order: replace names with resolved IDs in place
-        kwargs["label_ids"] = [
-            label if _looks_like_id(label) else next(name_iter) for label in labels
-        ]
+        kwargs["label_ids"] = await _resolve_labels(svc, labels)
     if parent is not None:
         if _looks_like_id(parent):
             kwargs["parent_id"] = parent

@@ -213,7 +213,7 @@ class MarvinService:
     async def create_project(
         self,
         title: str,
-        type: str = "project",  # noqa: A002
+        type: Literal["project", "category"] = "project",  # noqa: A002
         parent_id: str | None = None,
         parent_name: str | None = None,
         note: str | None = None,
