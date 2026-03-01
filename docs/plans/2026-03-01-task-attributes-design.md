@@ -62,7 +62,7 @@ importance:    Literal["important", "low", "unset"] | None = None
 
 A `_build_attribute_setters()` helper encapsulates the value mappings. A shared `_ATTRIBUTE_MAPS` dict drives conversion so the mapping is defined once.
 
-**`marvin.py`** — `create_task()` and `update_item()` pass through the new fields unchanged (already accepts `**kwargs` / `setters: dict`). No logic changes needed in this layer.
+**`marvin.py`** — `create_task()` gains an `extra_fields: dict[str, Any] | None` parameter. Because `/addTask` silently drops attribute fields, `create_task` does a create-then-update when `extra_fields` are provided. `update_item()` requires no changes — it already accepts arbitrary `setters: dict`.
 
 ### Clearing semantics
 
