@@ -3,7 +3,13 @@
 
 import pytest
 
-from amazing_marvin_mcp.server import _looks_like_id, _validate_date, _validate_datetime, mcp
+from amazing_marvin_mcp.server import (
+    _build_attribute_setters,
+    _looks_like_id,
+    _validate_date,
+    _validate_datetime,
+    mcp,
+)
 
 
 class TestServerSetup:
@@ -157,3 +163,86 @@ class TestLooksLikeId:
 
     def test_mixed_case_hex_is_id(self) -> None:
         assert _looks_like_id("42C312949028AB5B371A608847CEF9A6") is True
+
+
+class TestBuildAttributeSetters:
+    def test_all_none_returns_empty(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, None, None)
+        assert result == {}
+
+    def test_energy_low(self) -> None:
+        result = _build_attribute_setters("low", None, None, None, None, None)
+        assert result == {"energyAmount": 1}
+
+    def test_energy_high(self) -> None:
+        result = _build_attribute_setters("high", None, None, None, None, None)
+        assert result == {"energyAmount": 2}
+
+    def test_energy_unset(self) -> None:
+        result = _build_attribute_setters("unset", None, None, None, None, None)
+        assert result == {"energyAmount": False}
+
+    def test_focus_low(self) -> None:
+        result = _build_attribute_setters(None, "low", None, None, None, None)
+        assert result == {"focusLevel": 1}
+
+    def test_focus_high(self) -> None:
+        result = _build_attribute_setters(None, "high", None, None, None, None)
+        assert result == {"focusLevel": 2}
+
+    def test_focus_unset(self) -> None:
+        result = _build_attribute_setters(None, "unset", None, None, None, None)
+        assert result == {"focusLevel": False}
+
+    def test_mental_weight_weighing(self) -> None:
+        result = _build_attribute_setters(None, None, "weighing", None, None, None)
+        assert result == {"mentalWeight": 2}
+
+    def test_mental_weight_crushing(self) -> None:
+        result = _build_attribute_setters(None, None, "crushing", None, None, None)
+        assert result == {"mentalWeight": 4}
+
+    def test_mental_weight_unset(self) -> None:
+        result = _build_attribute_setters(None, None, "unset", None, None, None)
+        assert result == {"mentalWeight": False}
+
+    def test_is_physical_true(self) -> None:
+        result = _build_attribute_setters(None, None, None, True, None, None)
+        assert result == {"isPhysical": True}
+
+    def test_is_physical_false_clears(self) -> None:
+        result = _build_attribute_setters(None, None, None, False, None, None)
+        assert result == {"isPhysical": False}
+
+    def test_urgency_urgent(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, "urgent", None)
+        assert result == {"isUrgent": 2}
+
+    def test_urgency_fire(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, "fire", None)
+        assert result == {"isUrgent": 4}
+
+    def test_urgency_unset(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, "unset", None)
+        assert result == {"isUrgent": False}
+
+    def test_importance_important(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, None, "important")
+        assert result == {"isStarred": 1}
+
+    def test_importance_low(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, None, "low")
+        assert result == {"isStarred": -1}
+
+    def test_importance_unset(self) -> None:
+        result = _build_attribute_setters(None, None, None, None, None, "unset")
+        assert result == {"isStarred": False}
+
+    def test_multiple_fields_combined(self) -> None:
+        result = _build_attribute_setters("high", "low", None, True, "urgent", None)
+        assert result == {
+            "energyAmount": 2,
+            "focusLevel": 1,
+            "isPhysical": True,
+            "isUrgent": 2,
+        }

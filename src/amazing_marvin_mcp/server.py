@@ -135,6 +135,46 @@ _WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 _WRITE_IDEMPOTENT = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True)
 _DESTRUCTIVE = ToolAnnotations(readOnlyHint=False, destructiveHint=True)
 
+# Maps parameter label → API value for each scale attribute field.
+# False is the API sentinel meaning "unset/clear".
+_ATTRIBUTE_MAPS: dict[str, dict[str, int | bool]] = {
+    "energyAmount": {"low": 1, "high": 2, "unset": False},
+    "focusLevel": {"low": 1, "high": 2, "unset": False},
+    "mentalWeight": {"weighing": 2, "crushing": 4, "unset": False},
+    "isUrgent": {"urgent": 2, "fire": 4, "unset": False},
+    "isStarred": {"important": 1, "low": -1, "unset": False},
+}
+
+
+def _build_attribute_setters(
+    energy_amount: Literal["low", "high", "unset"] | None,
+    focus_level: Literal["low", "high", "unset"] | None,
+    mental_weight: Literal["weighing", "crushing", "unset"] | None,
+    is_physical: bool | None,
+    urgency: Literal["urgent", "fire", "unset"] | None,
+    importance: Literal["important", "low", "unset"] | None,
+) -> dict[str, Any]:
+    """Convert MCP attribute parameters to API field setters.
+
+    Returns only the fields that were explicitly provided (not None).
+    'unset' maps to False (the API sentinel for clearing a field).
+    """
+    setters: dict[str, Any] = {}
+    scale_fields = [
+        ("energyAmount", energy_amount),
+        ("focusLevel", focus_level),
+        ("mentalWeight", mental_weight),
+        ("isUrgent", urgency),
+        ("isStarred", importance),
+    ]
+    for api_key, value in scale_fields:
+        if value is not None:
+            setters[api_key] = _ATTRIBUTE_MAPS[api_key][value]
+    if is_physical is not None:
+        setters["isPhysical"] = is_physical
+    return setters
+
+
 # ---------------------------------------------------------------------------
 # Read tools
 # ---------------------------------------------------------------------------
