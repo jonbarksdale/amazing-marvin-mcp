@@ -249,6 +249,12 @@ class TestFormatTask:
         attr_lines = [ln for ln in lines if "Attributes:" in ln]
         assert len(attr_lines) == 1
 
+    def test_unknown_attribute_value_not_rendered(self) -> None:
+        """An API value with no label mapping should not appear in output."""
+        task = {"_id": "abc", "title": "T", "energyAmount": 99}
+        result = format_task(task)
+        assert "energy:" not in result
+
 
 class TestFormatTasksList:
     def test_empty_list(self) -> None:

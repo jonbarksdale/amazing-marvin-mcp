@@ -75,7 +75,7 @@ def format_task(task: dict[str, object]) -> str:
     attrs: list[str] = []
     for field, display_name, label_map in _ATTRIBUTE_DISPLAY:
         val = task.get(field)
-        if isinstance(val, int) and val and val in label_map:
+        if type(val) is int and val and val in label_map:
             attrs.append(f"{display_name}:{label_map[val]}")
     if task.get("isPhysical"):
         attrs.append("physical")
