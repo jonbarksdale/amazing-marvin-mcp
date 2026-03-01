@@ -430,6 +430,21 @@ class TestUpdateItem:
         assert {"key": "title", "val": "Updated"} in setters
         assert {"key": "day", "val": "2026-01-01"} in setters
 
+    @pytest.mark.asyncio
+    async def test_update_item_with_attribute_setters(self) -> None:
+        """update_item passes attribute setters as API setter objects."""
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "abc", "title": "T", "energyAmount": 2}
+
+        result = await svc.update_item("abc", setters={"energyAmount": 2, "isPhysical": True})
+        call_data = mock.post.call_args[1]["data"]
+        assert call_data["itemId"] == "abc"
+        setters_list = call_data["setters"]
+        setters_dict = {s["key"]: s["val"] for s in setters_list}
+        assert setters_dict["energyAmount"] == 2
+        assert setters_dict["isPhysical"] is True
+        assert result == {"_id": "abc", "title": "T", "energyAmount": 2}
+
 
 class TestUpdateItemBackburner:
     @pytest.mark.asyncio

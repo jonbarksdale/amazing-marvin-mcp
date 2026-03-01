@@ -162,6 +162,7 @@ class TestWriteLifecycle:
                 task_id,
                 setters={"energyAmount": False},
             )
+            # API may omit, return null, or return False for cleared fields
             assert cleared.get("energyAmount") in (False, None, 0)
         finally:
             await service.delete_item(task_id)
