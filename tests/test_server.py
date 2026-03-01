@@ -115,6 +115,20 @@ class TestServerSetup:
         )
         assert has_enum, "track_time: action should use Literal type for schema hints"
 
+    def test_attribute_params_use_literal_type(self) -> None:
+        """Attribute scale params should expose allowed values in JSON schema."""
+        tools = {t.name: t for t in mcp._tool_manager.list_tools()}
+        for tool_name in ("create_task", "update_item"):
+            schema = tools[tool_name].parameters
+            props = schema["properties"]
+            for param in ("energy_amount", "focus_level", "mental_weight", "urgency", "importance"):
+                prop = props[param]
+                any_of = prop.get("anyOf", [])
+                has_enum = "enum" in prop or any(
+                    "enum" in item for item in any_of if isinstance(item, dict)
+                )
+                assert has_enum, f"{tool_name}.{param} should use Literal type"
+
     def test_destructive_tools_have_destructive_annotation(self) -> None:
         tools = {t.name: t for t in mcp._tool_manager.list_tools()}
         ann = tools["delete_item"].annotations

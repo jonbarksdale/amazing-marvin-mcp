@@ -142,6 +142,30 @@ class TestWriteLifecycle:
         finally:
             await service.delete_item(task_id)
 
+    @pytest.mark.asyncio
+    async def test_update_item_sets_and_clears_attributes(
+        self, service: MarvinService, sandbox_parent_id: str
+    ) -> None:
+        task = await create_test_task(service, sandbox_parent_id, "MCP Update Attributes Test")
+        task_id = task["_id"]
+        try:
+            # Set attributes
+            updated = await service.update_item(
+                task_id,
+                setters={"energyAmount": 2, "isUrgent": 2},
+            )
+            assert updated.get("energyAmount") == 2
+            assert updated.get("isUrgent") == 2
+
+            # Clear one attribute
+            cleared = await service.update_item(
+                task_id,
+                setters={"energyAmount": False},
+            )
+            assert cleared.get("energyAmount") in (False, None, 0)
+        finally:
+            await service.delete_item(task_id)
+
 
 class TestProjectLifecycle:
     """Lifecycle tests covering project and category create, update, and delete."""

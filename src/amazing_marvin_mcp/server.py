@@ -382,11 +382,24 @@ async def update_item(
     due_date: str | None = None,
     note: str | None = None,
     backburner: bool | None = None,
+    energy_amount: Literal["low", "high", "unset"] | None = None,
+    focus_level: Literal["low", "high", "unset"] | None = None,
+    mental_weight: Literal["weighing", "crushing", "unset"] | None = None,
+    is_physical: bool | None = None,
+    urgency: Literal["urgent", "fire", "unset"] | None = None,
+    importance: Literal["important", "low", "unset"] | None = None,
 ) -> str:
     """Update task, project, or category fields. Pass only the fields you want to change.
 
     Set backburner=true to move an item to the backburner,
     or backburner=false to restore it.
+
+    energy_amount: Energy required. 'low'/'high' to set, 'unset' to clear.
+    focus_level: Concentration depth needed. 'low'/'high' to set, 'unset' to clear.
+    mental_weight: Psychological burden. 'weighing'/'crushing' to set, 'unset' to clear.
+    is_physical: True to mark as physical task, False to clear.
+    urgency: 'urgent'/'fire' to set urgency tier, 'unset' to clear.
+    importance: 'important'/'low' to set, 'unset' to clear.
     """
     setters: dict[str, Any] = {}
     if title is not None:
@@ -401,6 +414,11 @@ async def update_item(
         setters["note"] = note
     if backburner is not None:
         setters["backburner"] = backburner
+    setters.update(
+        _build_attribute_setters(
+            energy_amount, focus_level, mental_weight, is_physical, urgency, importance
+        )
+    )
     if not setters:
         return "Error: No fields provided to update."
     result = await _get_service().update_item(item_id, setters)
