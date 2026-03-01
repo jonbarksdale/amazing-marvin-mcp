@@ -305,6 +305,49 @@ class TestCreateTask:
             "note": "A note",
         }
 
+    @pytest.mark.asyncio
+    async def test_create_with_extra_fields_calls_update(self) -> None:
+        svc, mock = _make_service()
+        # /addTask returns created task; /doc/update returns updated task
+        mock.post.side_effect = [
+            {"_id": "new1", "title": "Test"},
+            {"_id": "new1", "title": "Test", "energyAmount": 1},
+        ]
+
+        result = await svc.create_task(title="Test", extra_fields={"energyAmount": 1})
+
+        assert mock.post.call_count == 2
+        # First call: /addTask with no extra fields in body
+        first_call = mock.post.call_args_list[0]
+        assert first_call[0][0] == "/addTask"
+        assert "energyAmount" not in first_call[1]["data"]
+        # Second call: /doc/update with setters
+        second_call = mock.post.call_args_list[1]
+        assert second_call[0][0] == "/doc/update"
+        update_body = second_call[1]["data"]
+        assert update_body["itemId"] == "new1"
+        assert {"key": "energyAmount", "val": 1} in update_body["setters"]
+        # Result is from the update call
+        assert result["energyAmount"] == 1
+
+    @pytest.mark.asyncio
+    async def test_create_without_extra_fields_does_not_call_update(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "new1", "title": "Test"}
+
+        await svc.create_task(title="Test")
+
+        mock.post.assert_called_once_with("/addTask", data={"title": "Test"})
+
+    @pytest.mark.asyncio
+    async def test_create_with_empty_extra_fields_does_not_call_update(self) -> None:
+        svc, mock = _make_service()
+        mock.post.return_value = {"_id": "new1", "title": "Test"}
+
+        await svc.create_task(title="Test", extra_fields={})
+
+        mock.post.assert_called_once_with("/addTask", data={"title": "Test"})
+
 
 class TestDeleteItem:
     @pytest.mark.asyncio

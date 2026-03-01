@@ -278,8 +278,23 @@ async def create_task(
     parent: str | None = None,
     note: str | None = None,
     labels: list[str] | None = None,
+    energy_amount: Literal["low", "high", "unset"] | None = None,
+    focus_level: Literal["low", "high", "unset"] | None = None,
+    mental_weight: Literal["weighing", "crushing", "unset"] | None = None,
+    is_physical: bool | None = None,
+    urgency: Literal["urgent", "fire", "unset"] | None = None,
+    importance: Literal["important", "low", "unset"] | None = None,
 ) -> str:
-    """Create a task. 'parent' can be a project name or ID. Dates use YYYY-MM-DD."""
+    """Create a task. 'parent' can be a project name or ID. Dates use YYYY-MM-DD.
+
+    Attribute parameters:
+    - energy_amount: energy required (low, high, or unset to clear)
+    - focus_level: focus required (low, high, or unset to clear)
+    - mental_weight: mental load (weighing, crushing, or unset to clear)
+    - is_physical: true if the task requires physical activity
+    - urgency: urgency level (urgent, fire, or unset to clear)
+    - importance: importance level (important, low, or unset to clear)
+    """
     _validate_date(day)
     _validate_date(due_date)
     svc = _get_service()
@@ -297,6 +312,11 @@ async def create_task(
             kwargs["parent_id"] = parent
         else:
             kwargs["parent_name"] = parent
+    attribute_fields = _build_attribute_setters(
+        energy_amount, focus_level, mental_weight, is_physical, urgency, importance
+    )
+    if attribute_fields:
+        kwargs["extra_fields"] = attribute_fields
     result = await svc.create_task(**kwargs)
     return f"Created: {format_task(result)}"
 

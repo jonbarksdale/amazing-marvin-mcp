@@ -189,8 +189,13 @@ class MarvinService:
         parent_name: str | None = None,
         label_ids: list[str] | None = None,
         note: str | None = None,
+        extra_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Create a task. Resolves parent_name to ID if provided."""
+        """Create a task. Resolves parent_name to ID if provided.
+
+        extra_fields are applied via a follow-up update call because /addTask
+        silently drops attribute fields like energyAmount and focusLevel.
+        """
         body: dict[str, Any] = {"title": title}
         if day is not None:
             body["day"] = day
@@ -208,6 +213,10 @@ class MarvinService:
         result: dict[str, Any] = await self._client.post("/addTask", data=body)
         # Invalidate categories cache since a project may have been created
         self.invalidate_caches()
+
+        if extra_fields:
+            result = await self.update_item(result["_id"], setters=extra_fields)
+
         return result
 
     async def create_project(

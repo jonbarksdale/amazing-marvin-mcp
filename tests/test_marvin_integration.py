@@ -122,6 +122,26 @@ class TestWriteLifecycle:
         finally:
             await service.delete_item(task["_id"])
 
+    @pytest.mark.asyncio
+    async def test_create_task_with_attributes(
+        self, service: MarvinService, sandbox_parent_id: str
+    ) -> None:
+        task = await service.create_task(
+            title="MCP Attributes Test",
+            parent_id=sandbox_parent_id,
+            extra_fields={"energyAmount": 2, "focusLevel": 1, "isPhysical": True},
+        )
+        task_id = task["_id"]
+        try:
+            children = await service.get_children(parent_id=sandbox_parent_id, backburner="include")
+            created = next((t for t in children if t["_id"] == task_id), None)
+            assert created is not None, "Created task not found in children"
+            assert created.get("energyAmount") == 2
+            assert created.get("focusLevel") == 1
+            assert created.get("isPhysical") is True
+        finally:
+            await service.delete_item(task_id)
+
 
 class TestProjectLifecycle:
     """Lifecycle tests covering project and category create, update, and delete."""
