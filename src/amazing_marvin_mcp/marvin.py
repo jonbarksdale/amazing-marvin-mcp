@@ -195,6 +195,7 @@ class MarvinService:
 
         extra_fields are applied via a follow-up update call because /addTask
         silently drops attribute fields like energyAmount and focusLevel.
+        If the update fails, the task will have been created without the attributes.
         """
         body: dict[str, Any] = {"title": title}
         if day is not None:

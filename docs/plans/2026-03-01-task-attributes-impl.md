@@ -417,11 +417,13 @@ async def create_task(
         body["labelIds"] = label_ids
     if note is not None:
         body["note"] = note
-    if extra_fields:
-        body.update(extra_fields)
-
+    # NOTE: /addTask silently drops attribute fields; they must be set via /doc/update
     result: dict[str, Any] = await self._client.post("/addTask", data=body)
     self.invalidate_caches()
+
+    if extra_fields:
+        result = await self.update_item(result["_id"], setters=extra_fields)
+
     return result
 ```
 
