@@ -5,6 +5,16 @@ from typing import Literal
 
 BackburnerFilter = Literal["include", "only"] | None
 
+# Maps API field → (display_name, {api_value: display_label})
+# Used by format_task() to render task attributes.
+_ATTRIBUTE_DISPLAY: list[tuple[str, str, dict[int, str]]] = [
+    ("energyAmount", "energy", {1: "low", 2: "high"}),
+    ("focusLevel", "focus", {1: "low", 2: "high"}),
+    ("mentalWeight", "weight", {2: "weighing", 4: "crushing"}),
+    ("isUrgent", "urgency", {2: "urgent", 4: "fire"}),
+    ("isStarred", "importance", {1: "important", -1: "low"}),
+]
+
 CHARACTER_LIMIT: int = 25_000
 NOTES_LIMIT: int = 500
 
@@ -61,6 +71,16 @@ def format_task(task: dict[str, object]) -> str:
     if raw_notes:
         trimmed = trim_notes(str(raw_notes))
         line += f"\n  Notes: {trimmed}"
+
+    attrs: list[str] = []
+    for field, display_name, label_map in _ATTRIBUTE_DISPLAY:
+        val = task.get(field)
+        if isinstance(val, int) and val and val in label_map:
+            attrs.append(f"{display_name}:{label_map[val]}")
+    if task.get("isPhysical"):
+        attrs.append("physical")
+    if attrs:
+        line += f"\n  Attributes: {'  '.join(attrs)}"
 
     return line
 

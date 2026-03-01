@@ -172,6 +172,83 @@ class TestFormatTask:
         assert "[project]" not in result
         assert "[category]" not in result
 
+    def test_task_with_energy_amount_low(self) -> None:
+        task = {"_id": "abc", "title": "T", "energyAmount": 1}
+        result = format_task(task)
+        assert "energy:low" in result
+
+    def test_task_with_energy_amount_high(self) -> None:
+        task = {"_id": "abc", "title": "T", "energyAmount": 2}
+        result = format_task(task)
+        assert "energy:high" in result
+
+    def test_task_with_focus_level_low(self) -> None:
+        task = {"_id": "abc", "title": "T", "focusLevel": 1}
+        result = format_task(task)
+        assert "focus:low" in result
+
+    def test_task_with_focus_level_high(self) -> None:
+        task = {"_id": "abc", "title": "T", "focusLevel": 2}
+        result = format_task(task)
+        assert "focus:high" in result
+
+    def test_task_with_mental_weight_weighing(self) -> None:
+        task = {"_id": "abc", "title": "T", "mentalWeight": 2}
+        result = format_task(task)
+        assert "weight:weighing" in result
+
+    def test_task_with_mental_weight_crushing(self) -> None:
+        task = {"_id": "abc", "title": "T", "mentalWeight": 4}
+        result = format_task(task)
+        assert "weight:crushing" in result
+
+    def test_task_with_urgency_urgent(self) -> None:
+        task = {"_id": "abc", "title": "T", "isUrgent": 2}
+        result = format_task(task)
+        assert "urgency:urgent" in result
+
+    def test_task_with_urgency_fire(self) -> None:
+        task = {"_id": "abc", "title": "T", "isUrgent": 4}
+        result = format_task(task)
+        assert "urgency:fire" in result
+
+    def test_task_with_importance_important(self) -> None:
+        task = {"_id": "abc", "title": "T", "isStarred": 1}
+        result = format_task(task)
+        assert "importance:important" in result
+
+    def test_task_with_importance_low(self) -> None:
+        task = {"_id": "abc", "title": "T", "isStarred": -1}
+        result = format_task(task)
+        assert "importance:low" in result
+
+    def test_task_with_is_physical(self) -> None:
+        task = {"_id": "abc", "title": "T", "isPhysical": True}
+        result = format_task(task)
+        assert "physical" in result
+
+    def test_task_no_attributes_no_attributes_line(self) -> None:
+        task = {"_id": "abc", "title": "T"}
+        result = format_task(task)
+        assert "Attributes:" not in result
+
+    def test_task_false_attributes_not_rendered(self) -> None:
+        """API sentinel value False means unset — should not render."""
+        task = {"_id": "abc", "title": "T", "energyAmount": False, "isPhysical": False}
+        result = format_task(task)
+        assert "Attributes:" not in result
+
+    def test_task_multiple_attributes_on_one_line(self) -> None:
+        task = {"_id": "abc", "title": "T", "energyAmount": 2, "focusLevel": 1, "isPhysical": True}
+        result = format_task(task)
+        assert "energy:high" in result
+        assert "focus:low" in result
+        assert "physical" in result
+        # All attributes on a single "Attributes:" line
+        lines = result.split("\n")
+        attr_lines = [ln for ln in lines if "Attributes:" in ln]
+        assert len(attr_lines) == 1
+
 
 class TestFormatTasksList:
     def test_empty_list(self) -> None:
