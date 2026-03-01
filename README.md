@@ -49,10 +49,10 @@ Add to your `claude_desktop_config.json`:
 | `get_labels` | Get all labels |
 | `get_time_blocks` | Get today's time blocks |
 | `search` | Search projects and folders by name (backburner filter) |
-| `create_task` | Create a task (with optional project, dates, notes) |
+| `create_task` | Create a task (with optional project, dates, notes, and task attributes: energy, focus, mental weight, urgency, importance, physical) |
 | `create_event` | Create a calendar event |
 | `create_project` | Create a project or category (with optional parent, dates, labels, priority) |
-| `update_item` | Update task, project, or category fields (title, dates, notes, backburner) |
+| `update_item` | Update task, project, or category fields (title, dates, notes, backburner, and task attributes) |
 | `mark_done` | Mark a task as complete |
 | `delete_item` | Delete a task, project, or category |
 | `track_time` | Start or stop time tracking |
