@@ -132,10 +132,10 @@ def format_categories_tree(categories: list[dict[str, object]]) -> str:
         for cat in children.get(parent_key, []):
             indent = "  " * depth
             cat_type = cat.get("type", "project")
-            icon = "📁" if cat_type == "folder" else "📋"
+            icon = "📁" if cat_type == "category" else "📋"
             cat_title = cat.get("title", "Untitled")
             cat_id = cat.get("_id")
-            lines.append(f"{indent}- {icon} **{cat_title}** (id: {cat_id})")
+            lines.append(f"{indent}- {icon} **{cat_title}** [{cat_type}] (id: {cat_id})")
             _render(str(cat["_id"]), depth + 1)
 
     _render(None, 0)

@@ -282,8 +282,8 @@ class TestFormatCategoriesTree:
         assert "Work" in result
         assert "Personal" in result
 
-    def test_folder_type_shows_folder_icon(self) -> None:
-        categories = [{"_id": "1", "title": "Archive", "type": "folder"}]
+    def test_category_type_shows_folder_icon(self) -> None:
+        categories = [{"_id": "1", "title": "Archive", "type": "category"}]
         result = format_categories_tree(categories)
         assert "📁" in result
         assert "📋" not in result
@@ -293,6 +293,30 @@ class TestFormatCategoriesTree:
         result = format_categories_tree(categories)
         assert "📋" in result
         assert "📁" not in result
+
+    def test_category_type_shows_type_label(self) -> None:
+        categories = [{"_id": "1", "title": "Areas", "type": "category"}]
+        result = format_categories_tree(categories)
+        assert "[category]" in result
+
+    def test_project_type_shows_type_label(self) -> None:
+        categories = [{"_id": "1", "title": "Work", "type": "project"}]
+        result = format_categories_tree(categories)
+        assert "[project]" in result
+
+    def test_mixed_types_show_correct_icons_and_labels(self) -> None:
+        categories = [
+            {"_id": "1", "title": "Areas", "type": "category"},
+            {"_id": "2", "title": "Career", "type": "project", "parentId": "1"},
+        ]
+        result = format_categories_tree(categories)
+        lines = result.split("\n")
+        areas_line = next(ln for ln in lines if "Areas" in ln)
+        career_line = next(ln for ln in lines if "Career" in ln)
+        assert "📁" in areas_line
+        assert "[category]" in areas_line
+        assert "📋" in career_line
+        assert "[project]" in career_line
 
     def test_nested_categories(self) -> None:
         categories = [
@@ -328,7 +352,7 @@ class TestFormatCategoriesTree:
     def test_four_level_nesting_indentation(self) -> None:
         """4 levels of nesting should produce increasing indentation at each level."""
         categories = [
-            {"_id": "1", "title": "Level0", "type": "folder"},
+            {"_id": "1", "title": "Level0", "type": "category"},
             {"_id": "2", "title": "Level1", "type": "project", "parentId": "1"},
             {"_id": "3", "title": "Level2", "type": "project", "parentId": "2"},
             {"_id": "4", "title": "Level3", "type": "project", "parentId": "3"},
