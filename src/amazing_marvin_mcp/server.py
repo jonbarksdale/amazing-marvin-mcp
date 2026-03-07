@@ -394,6 +394,8 @@ async def update_item(
     Set backburner=true to move an item to the backburner,
     or backburner=false to restore it.
 
+    day: YYYY-MM-DD to schedule, or 'unset' to clear the scheduled date.
+    due_date: YYYY-MM-DD to set a due date, or 'unset' to clear it.
     energy_amount: Energy required. 'low'/'high' to set, 'unset' to clear.
     focus_level: Concentration depth needed. 'low'/'high' to set, 'unset' to clear.
     mental_weight: Psychological burden. 'weighing'/'crushing' to set, 'unset' to clear.
@@ -404,10 +406,14 @@ async def update_item(
     setters: dict[str, Any] = {}
     if title is not None:
         setters["title"] = title
-    if day is not None:
+    if day == "unset":
+        setters["day"] = False
+    elif day is not None:
         _validate_date(day)
         setters["day"] = day
-    if due_date is not None:
+    if due_date == "unset":
+        setters["dueDate"] = False
+    elif due_date is not None:
         _validate_date(due_date)
         setters["dueDate"] = due_date
     if note is not None:

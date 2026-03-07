@@ -1,6 +1,8 @@
 # ABOUTME: Tests for the MCP server adapter layer.
 # ABOUTME: Validates tool registration and prompt registration.
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from amazing_marvin_mcp.server import (
@@ -9,6 +11,7 @@ from amazing_marvin_mcp.server import (
     _validate_date,
     _validate_datetime,
     mcp,
+    update_item,
 )
 
 
@@ -260,3 +263,58 @@ class TestBuildAttributeSetters:
             "isPhysical": True,
             "isUrgent": 2,
         }
+
+
+class TestUpdateItemDateClearing:
+    """update_item handler sends False to the API to clear scheduled/due dates."""
+
+    def _make_mock_service(self) -> AsyncMock:
+        mock_svc = AsyncMock()
+        mock_svc.update_item.return_value = {"_id": "t1", "title": "Task"}
+        return mock_svc
+
+    @pytest.mark.asyncio
+    async def test_day_unset_sends_false_to_api(self) -> None:
+        mock_svc = self._make_mock_service()
+        with patch("amazing_marvin_mcp.server._get_service", return_value=mock_svc):
+            await update_item(item_id="t1", day="unset")
+
+        mock_svc.update_item.assert_awaited_once()
+        _item_id, setters = mock_svc.update_item.call_args.args
+        assert setters["day"] is False
+
+    @pytest.mark.asyncio
+    async def test_due_date_unset_sends_false_to_api(self) -> None:
+        mock_svc = self._make_mock_service()
+        with patch("amazing_marvin_mcp.server._get_service", return_value=mock_svc):
+            await update_item(item_id="t1", due_date="unset")
+
+        mock_svc.update_item.assert_awaited_once()
+        _item_id, setters = mock_svc.update_item.call_args.args
+        assert setters["dueDate"] is False
+
+    @pytest.mark.asyncio
+    async def test_day_unset_skips_date_validation(self) -> None:
+        """'unset' must not be passed through _validate_date, which would reject it."""
+        mock_svc = self._make_mock_service()
+        with patch("amazing_marvin_mcp.server._get_service", return_value=mock_svc):
+            # Should not raise ValueError about invalid date format
+            await update_item(item_id="t1", day="unset")
+
+    @pytest.mark.asyncio
+    async def test_day_valid_date_still_sets_correctly(self) -> None:
+        mock_svc = self._make_mock_service()
+        with patch("amazing_marvin_mcp.server._get_service", return_value=mock_svc):
+            await update_item(item_id="t1", day="2026-03-07")
+
+        _item_id, setters = mock_svc.update_item.call_args.args
+        assert setters["day"] == "2026-03-07"
+
+    @pytest.mark.asyncio
+    async def test_due_date_valid_date_still_sets_correctly(self) -> None:
+        mock_svc = self._make_mock_service()
+        with patch("amazing_marvin_mcp.server._get_service", return_value=mock_svc):
+            await update_item(item_id="t1", due_date="2026-03-07")
+
+        _item_id, setters = mock_svc.update_item.call_args.args
+        assert setters["dueDate"] == "2026-03-07"
