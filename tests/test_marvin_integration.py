@@ -184,6 +184,23 @@ class TestWriteLifecycle:
         finally:
             await service.delete_item(task_id)
 
+    @pytest.mark.asyncio
+    async def test_update_item_clears_due_date(
+        self, service: MarvinService, sandbox_parent_id: str
+    ) -> None:
+        task = await create_test_task(
+            service, sandbox_parent_id, "MCP Clear Due Date Test", due_date="2099-01-01"
+        )
+        task_id = task["_id"]
+        try:
+            assert task.get("dueDate") == "2099-01-01"
+
+            cleared = await service.update_item(task_id, setters={"dueDate": False})
+            # API may omit or return null/False for a cleared due date
+            assert cleared.get("dueDate") in (False, None, "")
+        finally:
+            await service.delete_item(task_id)
+
 
 class TestProjectLifecycle:
     """Lifecycle tests covering project and category create, update, and delete."""
