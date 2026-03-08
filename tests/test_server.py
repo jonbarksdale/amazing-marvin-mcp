@@ -132,6 +132,18 @@ class TestServerSetup:
                 )
                 assert has_enum, f"{tool_name}.{param} should use Literal type"
 
+    def test_update_item_date_params_have_unset_description(self) -> None:
+        """day and due_date in update_item must advertise 'unset' in the schema description."""
+        tools = {t.name: t for t in mcp._tool_manager.list_tools()}
+        schema = tools["update_item"].parameters
+        props = schema["properties"]
+        for param in ("day", "due_date"):
+            prop = props[param]
+            desc = prop.get("description", "")
+            assert "unset" in desc, (
+                f"update_item.{param} schema description should mention 'unset' to clear the field"
+            )
+
     def test_destructive_tools_have_destructive_annotation(self) -> None:
         tools = {t.name: t for t in mcp._tool_manager.list_tools()}
         ann = tools["delete_item"].annotations

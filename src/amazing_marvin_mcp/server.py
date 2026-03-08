@@ -6,11 +6,12 @@ import functools
 import os
 import re
 from collections.abc import Callable, Coroutine
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import httpx
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from amazing_marvin_mcp.client import MarvinAPIError
 from amazing_marvin_mcp.formatting import (
@@ -378,8 +379,8 @@ async def create_event(
 async def update_item(
     item_id: str,
     title: str | None = None,
-    day: str | None = None,
-    due_date: str | None = None,
+    day: Annotated[str | None, Field(description="YYYY-MM-DD or 'unset' to clear.")] = None,
+    due_date: Annotated[str | None, Field(description="YYYY-MM-DD or 'unset' to clear.")] = None,
     note: str | None = None,
     backburner: bool | None = None,
     energy_amount: Literal["low", "high", "unset"] | None = None,
